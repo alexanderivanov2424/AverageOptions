@@ -1,0 +1,185 @@
+''' QLearningAgentClass.py: Class for a basic QLearningAgent '''
+
+# Python imports.
+import random
+import numpy
+import time
+from collections import defaultdict
+
+from options.OptionClasses import Option
+
+# Other imports.
+from simple_rl.agents.AgentClass import Agent
+
+class OptionAgent(Agent):
+    ''' Implementation for a Q Learning Agent '''
+
+    def __init__(self, name, actions, option_method=None, option_freq=1000, option_max=32, alpha=0.01, gamma=0.99, epsilon=0.1, default_q=1.0):
+
+        Agent.__init__(self, name=name, actions=actions, gamma=gamma)
+
+        self.alpha = alpha
+        self.epsilon = epsilon
+        self.step_number = 0
+        self.default_q = default_q
+
+        self.base_actions = self.actions
+        self.actions = self.actions
+
+        self.q_func = defaultdict(lambda: defaultdict(lambda: self.default_q))
+
+        self.option_method = option_method
+        self.option_freq = 1000
+        self.option_max = option_max
+
+        self.prev_state = None
+        self.prev_action = None
+
+        self.options = []
+
+        self.in_option = False
+        self.just_finished_option = False
+        self.cur_option = 0
+        self.option_reward = 0
+        self.option_step = 1
+
+    def generate_options(self, num_options):
+        self.options.extend(self.option_method(num_options, None))
+
+    def get_available_options(self, state):
+        options = []
+        for op in range(len(self.options)):
+            if state == self.options[op].start:
+                options.append("option-" + str(op))
+        return options
+
+
+    def act(self, state):
+        if self.in_option:
+            OPTION = self.options[self.cur_option]
+            action, done = OPTION.act(state)
+            if done:
+                self.just_finished_option = True
+            return action
+
+        else:
+            # self.update(self.prev_state, self.prev_action, reward, state)
+            self.actions = self.base_actions + self.get_available_options(state)
+            action = self.epsilon_greedy_q_policy(state)
+
+            if "option" in action:
+                self.cur_option = int(action[len("option-"):])
+                self.option_reward = 0
+                self.option_step = 0
+                self.in_option = True
+                self.just_finished_option = False
+                return self.act(state) #start option
+            self.step_number += 1
+
+            return action
+
+    def epsilon_greedy_q_policy(self, state):
+        # Policy: Epsilon of the time explore, otherwise, greedyQ.
+        if numpy.random.random() > self.epsilon:
+            # Exploit.
+            action = self.get_max_q_action(state)
+        else:
+            # Explore
+            action = numpy.random.choice(self.actions)
+
+        return action
+
+    def update(self, state, action, reward, next_state, done):
+        if self.in_option:
+            self.option_reward += reward * self.gamma**self.option_step
+            self.option_step += 1
+            if done:
+                self.just_finished_option = True
+
+        if self.just_finished_option:
+            self.just_finished_option = False
+            self.in_option = False
+
+            OPTION = self.options[self.cur_option]
+            self.update_q_func(OPTION.start, "option-" + str(self.cur_option), self.option_reward, next_state)
+            self.option_reward = 0
+            self.option_step = 0
+            self.cur_option = 0
+        else:
+            self.update_q_func(state, action, reward, next_state)
+
+    def update_q_func(self, state, action, reward, next_state):
+        # Update the Q Function.
+        max_q_curr_state = self.get_max_q_value(next_state)
+        prev_q_val = self.get_q_value(state, action)
+        self.q_func[state][action] = (1 - self.alpha) * prev_q_val + self.alpha * (reward + self.gamma*max_q_curr_state)
+
+
+    def _compute_max_qval_action_pair(self, state):
+        # Grab random initial action in case all equal
+        best_action = random.choice(self.actions)
+        max_q_val = float("-inf")
+        shuffled_action_list = self.actions[:]
+        random.shuffle(shuffled_action_list)
+
+        # Find best action (action w/ current max predicted Q value)
+        for action in shuffled_action_list:
+            q_s_a = self.get_q_value(state, action)
+            if q_s_a > max_q_val:
+                max_q_val = q_s_a
+                best_action = action
+
+        return max_q_val, best_action
+
+    def get_max_q_action(self, state):
+        return self._compute_max_qval_action_pair(state)[1]
+
+    def get_max_q_value(self, state):
+        return self._compute_max_qval_action_pair(state)[0]
+
+    def get_value(self, state):
+        return self.get_max_q_value(state)
+
+    def get_q_value(self, state, action):
+        return self.q_func[state][action]
+
+
+    def clear_options():
+        self.options = []
+
+    def reset(self):
+        self.prev_state = None
+        self.prev_action = None
+        self.step_number = 0
+
+        self.in_option = False
+        self.just_finished_option = False
+        self.cur_option = 0
+        self.option_reward = 0
+        self.option_step = 1
+
+        self.q_func = defaultdict(lambda : defaultdict(lambda: self.default_q))
+        Agent.reset(self)
+
+    def end_of_episode(self):
+        self.prev_state = None
+        self.prev_action = None
+        self.step_number = 0
+
+        self.in_option = False
+        self.just_finished_option = False
+        self.cur_option = 0
+        self.option_reward = 0
+        self.option_step = 1
+        Agent.end_of_episode(self)
+
+
+    def print_q_func(self):
+
+        if len(self.q_func) == 0:
+            print("Q Func empty!")
+        else:
+            for state, actiond in self.q_func.items():
+                print(state)
+                for action, q_val in actiond.items():
+                    print("    ", action, q_val)
