@@ -117,7 +117,7 @@ class QLearningAgent(Agent):
     # ---- Q VALUES AND PARAMETERS ----
     # ---------------------------------
 
-    def update(self, state, action, reward, next_state, done, timeout):
+    def update(self, state, action, reward, next_state, terminal, timeout):
         '''
         Args:
             state (State)
@@ -134,7 +134,7 @@ class QLearningAgent(Agent):
             return
 
         # Update the Q Function.
-        max_q_curr_state = self.get_max_q_value(next_state)
+        max_q_curr_state = self.get_max_q_value(next_state) * (0 if terminal else 1)
         prev_q_val = self.get_q_value(state, action)
         self.q_func[state][action] = (1 - self.alpha) * prev_q_val + self.alpha * (reward + self.gamma*max_q_curr_state)
 

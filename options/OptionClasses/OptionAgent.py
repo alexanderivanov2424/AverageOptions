@@ -89,28 +89,32 @@ class OptionAgent(Agent):
 
         return action
 
-    def update(self, state, action, reward, next_state, done):
+    def update(self, state, action, reward, next_state, terminal, timeout):
         if self.in_option:
             self.option_reward += reward * self.gamma**self.option_step
             self.option_step += 1
-            if done:
+            if terminal or timeout: #we are done with the option but, mayy or may not need update / bootstrap
                 self.just_finished_option = True
 
         if self.just_finished_option:
+            #either option terminated itself, terminal reached in option, or timeout in option
+            # by case: update and bootstrap, only update, no update (as if timed out before picking option) 
             self.just_finished_option = False
             self.in_option = False
 
-            OPTION = self.options[self.cur_option]
-            self.update_q_func(OPTION.start, "option-" + str(self.cur_option), self.option_reward, next_state)
+            if not timeout:
+                OPTION = self.options[self.cur_option]
+                self.update_q_func(OPTION.start, "option-" + str(self.cur_option), self.option_reward, next_state, terminal)
+
             self.option_reward = 0
             self.option_step = 0
             self.cur_option = 0
         else:
-            self.update_q_func(state, action, reward, next_state)
+            self.update_q_func(state, action, reward, next_state, terminal)
 
-    def update_q_func(self, state, action, reward, next_state):
+    def update_q_func(self, state, action, reward, next_state, terminal):
         # Update the Q Function.
-        max_q_curr_state = self.get_max_q_value(next_state)
+        max_q_curr_state = self.get_max_q_value(next_state) * (0 if terminal else 1)
         prev_q_val = self.get_q_value(state, action)
         self.q_func[state][action] = (1 - self.alpha) * prev_q_val + self.alpha * (reward + self.gamma*max_q_curr_state)
 
