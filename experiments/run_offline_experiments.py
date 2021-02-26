@@ -67,11 +67,11 @@ def run_agent_on_mdp(agent, mdp, instances, episodes, steps, episode_sample_rate
                     action = agent.act(state)
 
                     reward, next_state = mdp.execute_agent_action(action)
-                    done = next_state.is_terminal()
+                    terminal = next_state.is_terminal()
+                    timeout = step==steps
+                    agent.update(state, action, reward, next_state, terminal, timeout)
 
-                    agent.update(state, action, reward, next_state, done)
-
-                    episode_reward = reward * mdp.gamma ** step
+                    episode_reward += reward * mdp.gamma ** step
 
                     if done:
                         break
@@ -87,7 +87,7 @@ def run_agent_on_mdp(agent, mdp, instances, episodes, steps, episode_sample_rate
 
                 pbar.update(1)
 
-            instance_rewards.append(np.cumsum(episode_rewards))
+            # instance_rewards.append(np.cumsum(episode_rewards))
             instance_rewards.append(episode_rewards)
     return instance_rewards
 

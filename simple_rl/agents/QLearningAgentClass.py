@@ -78,7 +78,7 @@ class QLearningAgent(Agent):
         self.prev_state = state
         self.prev_action = action
         self.step_number += 1
-        # 
+        #
         # # Anneal params.
         # if learning and self.anneal:
         #     self._anneal()
@@ -117,7 +117,7 @@ class QLearningAgent(Agent):
     # ---- Q VALUES AND PARAMETERS ----
     # ---------------------------------
 
-    def update(self, state, action, reward, next_state, done):
+    def update(self, state, action, reward, next_state, done, timeout):
         '''
         Args:
             state (State)

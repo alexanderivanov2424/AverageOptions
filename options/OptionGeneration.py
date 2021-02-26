@@ -6,8 +6,9 @@ from options.AverageOptions import AverageShortestOptions
 from options.ApproxAverageOptions import ApproxAverageOptions
 from options.HittingOptions import HittingTimeOptions
 
-def GetOptions(A, k, method='eigen'):
-    print("Getting options by method: " + method)
+def GetOptions(A, k, method='eigen', verbose=True):
+    if verbose:
+        print("Getting options by method: " + method)
 
     if method == 'eigen':
         B, options, vectors = Eigenoptions(A, k*2)
