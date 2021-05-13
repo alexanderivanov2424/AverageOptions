@@ -6,6 +6,7 @@ from options.FiedlerOptions import FiedlerOptions
 from options.EigenOptions import Eigenoptions
 from options.AverageOptions import AverageShortestOptions
 from options.ApproxAverageOptions import ApproxAverageOptions
+from options.MinimumHittingTimeOptions import MinimumHittingOptions
 
 from options.graph.mdp import GetAdjacencyMatrix
 
@@ -17,8 +18,6 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 matplotlib.style.use('default')
-
-
 
 
 def GetOption(mdp, k=1, sample=False, matrix=None, intToS=None, method='eigen'):
@@ -43,6 +42,9 @@ def GetOption(mdp, k=1, sample=False, matrix=None, intToS=None, method='eigen'):
     elif method == 'bet':
         # TODO: B is empty.
         B, options, vectors = BetweennessOptions(A, k)
+    elif method == 'MinHitting':
+        B, options = MinimumHittingOptions(A, [len(A)-1], k)
+        vectors = None
 
     return B, options, intToS, vectors
 
@@ -95,10 +97,10 @@ def plotOptionGraphs(matrix, type="eigen"):
 
 
 
-if __name__ == '__main__':S
+if __name__ == '__main__':
     n_options = 3
     dom = "grid"
-    task = "9x9grid"
+    task = "5x5grid"
 
     if dom == 'grid':
         mdp = make_grid_world_from_file('tasks/' + task + '.txt')
@@ -119,25 +121,28 @@ if __name__ == '__main__':S
 
     origMatrix, intToS = GetAdjacencyMatrix(mdp)
 
-    fiedlerMatrix, foptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='fiedler')
-    eigenMatrix, eoptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='eigen')
+    # fiedlerMatrix, foptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='fiedler')
+    # eigenMatrix, eoptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='eigen')
     ASPDMMatrix, ASPDMoptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='ASPDM')
-    ApproxAverageMatrix, ApproxAverageoptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='ApproxAverage')
+    # ApproxAverageMatrix, ApproxAverageoptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='ApproxAverage')
+    # MinHittingMatrix, MinHittingoptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='MinHitting')
     # _, boptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='bet')
 
 
     # print(foptions)
     # print(eoptions)
-    # print(ASPDMoptions)
-    print(ApproxAverageoptions)
+    print(ASPDMoptions)
+    # print(ApproxAverageoptions)
     # print(boptions)
+    # print(MinHittingoptions)
 
-    plotOptions(mdp, intToS, foptions, "Covering")
-    plotOptions(mdp, intToS, eoptions, "Eigen")
+    # plotOptions(mdp, intToS, foptions, "Covering")
+    # plotOptions(mdp, intToS, eoptions, "Eigen")
     plotOptions(mdp, intToS, ASPDMoptions, "Average")
-    plotOptions(mdp, intToS, ApproxAverageoptions, "ApproxAverage")
+    # plotOptions(mdp, intToS, ApproxAverageoptions, "ApproxAverage")
+    # plotOptions(mdp, intToS, MinHittingoptions, "MinHitting")
 
-    plotOptionGraphs(fiedlerMatrix, "Covering")
-    plotOptionGraphs(eigenMatrix, "Eigen")
-    plotOptionGraphs(ASPDMMatrix, "Average")
-    plotOptionGraphs(ApproxAverageMatrix, "ApproxAverage")
+    # plotOptionGraphs(fiedlerMatrix, "Covering")
+    # plotOptionGraphs(eigenMatrix, "Eigen")
+    # plotOptionGraphs(ASPDMMatrix, "Average")
+    # plotOptionGraphs(ApproxAverageMatrix, "ApproxAverage")

@@ -253,7 +253,7 @@ class RaceTrackMDP(MDP):
 
 
 
-def make_race_track_from_file(file_name, randomize=False, rand_init_and_goal=False, num_goals=1, name=None, goal_num=None, slip_prob=0.0):
+def make_race_track_from_file(file_name, randomize=False, rand_init_and_goal=False, num_goals=1, name=None, goal_num=None, slip_prob=0.0, step_cost=0.0):
     '''
     Args:
         file_name (str)
@@ -316,7 +316,7 @@ def make_race_track_from_file(file_name, randomize=False, rand_init_and_goal=Fal
     if len(goal_locs) == 0:
         goal_locs = [(num_cols, num_rows)]
 
-    return RaceTrackMDP(width=num_cols, height=num_rows, init_loc=(agent_x, agent_y), goal_locs=goal_locs, rand_init=rand_init_and_goal, rand_goal=rand_init_and_goal, lava_locs=lava_locs, walls=walls, name=name, slip_prob=slip_prob)
+    return RaceTrackMDP(width=num_cols, height=num_rows, init_loc=(agent_x, agent_y), goal_locs=goal_locs, rand_init=rand_init_and_goal, rand_goal=rand_init_and_goal, lava_locs=lava_locs, walls=walls, name=name, step_cost=step_cost, slip_prob=slip_prob)
 
     def reset(self):
         if self.rand_init:

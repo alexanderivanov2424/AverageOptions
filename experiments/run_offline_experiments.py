@@ -24,7 +24,7 @@ import numpy as np
 import random
 
 
-def train_agents_on_mdp(agents, mdp, instances=10, episodes=100, steps=500, episode_sample_rate = 5):
+def train_agents_on_mdp(agents, mdp, instances=10, episodes=100, steps=500, episode_sample_rate = 1):
 
     data_dict = {}
 
@@ -63,17 +63,22 @@ def run_agent_on_mdp(agent, mdp, instances, episodes, steps, episode_sample_rate
                 reward = 0
                 episode_reward = 0
 
+                agent_decisions = 0
+
                 for step in range(1,steps+1):
                     action = agent.act(state)
 
+                    if not hasattr(agent, 'in_option') or not agent.in_option:
+                        agent_decisions += 1
+
                     reward, next_state = mdp.execute_agent_action(action)
                     terminal = next_state.is_terminal()
-                    timeout = step==steps
+                    timeout = step == steps
                     agent.update(state, action, reward, next_state, terminal, timeout)
 
                     episode_reward += reward * mdp.gamma ** step
 
-                    if done:
+                    if terminal or timeout: #timeout happens anyway this happens anyway
                         break
                         # mdp.reset()
                         # agent.end_of_episode()
@@ -83,7 +88,12 @@ def run_agent_on_mdp(agent, mdp, instances, episodes, steps, episode_sample_rate
                     state = next_state
 
                 if episode % episode_sample_rate == 0:
-                    episode_rewards.append(episode_reward)
+                    # episode_rewards.append(episode_reward)
+                    X = 0
+                    if hasattr(agent, 'options_executed'):
+                        X += agent.options_executed
+                    episode_rewards.append(X)
+                    # episode_rewards.append(step)
 
                 pbar.update(1)
 

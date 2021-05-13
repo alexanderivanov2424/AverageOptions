@@ -15,7 +15,7 @@ class HanoiMDP(MDP):
 
     ACTIONS = ["01", "02", "10", "12", "20", "21"]
 
-    def __init__(self, num_pegs=3, num_discs=3, gamma=0.95, rand_init_goal=False):
+    def __init__(self, num_pegs=3, num_discs=3, gamma=0.95, rand_init_goal=False, step_cost=0.0):
         '''
         Args:
             num_pegs (int)
@@ -43,7 +43,7 @@ class HanoiMDP(MDP):
         if rand_init_goal:
             self.reset_init_and_goal()
 
-
+        self.step_cost = step_cost
         MDP.__init__(self, HanoiMDP.ACTIONS, self._transition_func, self._reward_func, init_state=init_state, gamma=gamma)
 
         self.cur_state = copy.deepcopy(self.init_state)
@@ -71,7 +71,8 @@ class HanoiMDP(MDP):
         source_index = int(action[0])
         dest_index = int(action[1])
 
-        return int(self._transition_func(state, action).is_terminal())
+        return int(self._transition_func(state, action).is_terminal()) - self.step_cost
+
 
     def _transition_func(self, state, action):
         '''

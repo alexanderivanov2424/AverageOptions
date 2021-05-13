@@ -4,24 +4,40 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class Option:
-    def __init__(self, start, end, policyDict, second_to_last):
+    def __init__(self, start, end, policyDict):
             self.start = start
             self.end = end
             self.policy = policyDict
-            self.second_to_last = second_to_last
+
+    def is_termination_state(self, state):
+        return state == self.end
+
+    def can_run(self, state):
+        return state in self.policy.keys()
 
     def act(self, state):
-        return self.policy[state], state == self.second_to_last
+        return self.policy[state]
 
 
-def constructOptionObject(option_i_pair, graph, intToS):
+def constructPointOptionObject(option_i_pair, graph, intToS):
     start = intToS[option_i_pair[0]]
     end = intToS[option_i_pair[1]]
     path = nx.shortest_path(graph, source=start, target=end)
     policyDict = {}
     for i in range(len(path)-1):
         policyDict[path[i]] = graph[path[i]][path[i+1]]['action']
-    return Option(start, end, policyDict, path[-2])
+    return Option(start, end, policyDict)
+
+def constructOptionObject(option_i_pair, graph, intToS):
+    start = intToS[option_i_pair[0]]
+    end = intToS[option_i_pair[1]]
+    path = nx.shortest_path(graph, target=end)
+    policyDict = {}
+    for start in path.keys():
+        if start == end:
+            continue
+        policyDict[start] = graph[path[start][0]][path[start][1]]['action']
+    return Option(start, end, policyDict)
 
 def getGraphFromMDP(mdp):
     G = nx.DiGraph()

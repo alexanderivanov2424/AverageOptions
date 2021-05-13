@@ -29,7 +29,7 @@ class TaxiOOMDP(OOMDP):
     ATTRIBUTES = ["x", "y", "has_passenger", "in_taxi", "dest_x", "dest_y"]
     CLASSES = ["agent", "wall", "passenger"]
 
-    def __init__(self, width, height, agent, walls, passengers, slip_prob=0, gamma=0.99):
+    def __init__(self, width, height, agent, walls, passengers, slip_prob=0, step_cost=0.0, gamma=0.95):
         self.height = height
         self.width = width
 
@@ -40,6 +40,7 @@ class TaxiOOMDP(OOMDP):
         init_state = self._create_state(agent_obj, wall_objs, pass_objs)
         OOMDP.__init__(self, TaxiOOMDP.ACTIONS, self._taxi_transition_func, self._taxi_reward_func, init_state=init_state, gamma=gamma)
         self.slip_prob = slip_prob
+        self.step_cost = step_cost
 
     def _create_state(self, agent_oo_obj, walls, passengers):
         '''
