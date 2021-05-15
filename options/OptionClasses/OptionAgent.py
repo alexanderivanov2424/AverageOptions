@@ -66,6 +66,7 @@ class OptionAgent(Agent):
         if self.in_option:
             OPTION = self.options[self.cur_option]
             action = OPTION.act(state)
+            self.step_number += 1
             self.option_step += 1
             return action
 
@@ -99,12 +100,11 @@ class OptionAgent(Agent):
 
     def update(self, state, action, reward, next_state, terminal, timeout):
         #always update primatives regardless of options taken
-        #self.update_q_func(state, action, reward, next_state, terminal)
+        self.update_q_func(state, action, reward, next_state, terminal)
 
         if self.in_option:
-
             self.option_reward += reward * self.gamma**self.option_step
-            if self.cur_option.is_termination_state(next_state): #hit the termination set of the option
+            if self.options[self.cur_option].is_termination_state(next_state): #hit the termination set of the option
                 self.just_finished_option = True
 
             if terminal or timeout: #we are done with the option but, may or may not need update / bootstrap
@@ -124,8 +124,8 @@ class OptionAgent(Agent):
             self.option_step = 0
             self.cur_option = 0
             self.option_start_state = None
-        else:
-            self.update_q_func(state, action, reward, next_state, terminal)
+        # else:
+        #     self.update_q_func(state, action, reward, next_state, terminal)
 
 
     def update_q_func(self, state, action, reward, next_state, terminal, option_len=1):
@@ -136,6 +136,7 @@ class OptionAgent(Agent):
             self.q_func[state][action] = (1 - self.alpha) * prev_q_val + self.alpha * (reward + self.gamma*max_q_curr_state)
         else:
             self.q_func[state][action] = (1 - self.alpha) * prev_q_val + self.alpha * (reward + (self.gamma**option_len)*max_q_curr_state)
+
 
     def _compute_max_qval_action_pair(self, state):
         self.actions = self.base_actions + self.get_available_options(state)
@@ -176,8 +177,6 @@ class OptionAgent(Agent):
             self.q_func[state][action] = q
             return q
 
-
-
     def clear_options():
         self.options = []
 
@@ -185,6 +184,7 @@ class OptionAgent(Agent):
         self.prev_state = None
         self.prev_action = None
         self.step_number = 0
+        self.episode_number = 0
 
         self.in_option = False
         self.just_finished_option = False

@@ -88,11 +88,7 @@ def run_agent_on_mdp(agent, mdp, instances, episodes, steps, episode_sample_rate
                     state = next_state
 
                 if episode % episode_sample_rate == 0:
-                    # episode_rewards.append(episode_reward)
-                    X = 0
-                    if hasattr(agent, 'options_executed'):
-                        X += agent.options_executed
-                    episode_rewards.append(X)
+                    episode_rewards.append(episode_reward)
                     # episode_rewards.append(step)
 
                 pbar.update(1)

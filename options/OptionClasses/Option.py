@@ -4,15 +4,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class Option:
-    def __init__(self, start, end, policyDict):
+    def __init__(self, start, end, policyDict, point_option=True):
             self.start = start
             self.end = end
             self.policy = policyDict
+            self.point_option = point_option
 
     def is_termination_state(self, state):
         return state == self.end
 
     def can_run(self, state):
+        if self.point_option:
+            return state == self.start
         return state in self.policy.keys()
 
     def act(self, state):
@@ -26,7 +29,7 @@ def constructPointOptionObject(option_i_pair, graph, intToS):
     policyDict = {}
     for i in range(len(path)-1):
         policyDict[path[i]] = graph[path[i]][path[i+1]]['action']
-    return Option(start, end, policyDict)
+    return Option(start, end, policyDict, point_option=True)
 
 def constructOptionObject(option_i_pair, graph, intToS):
     start = intToS[option_i_pair[0]]
@@ -37,7 +40,7 @@ def constructOptionObject(option_i_pair, graph, intToS):
         if start == end:
             continue
         policyDict[start] = graph[path[start][0]][path[start][1]]['action']
-    return Option(start, end, policyDict)
+    return Option(start, end, policyDict, point_option=False)
 
 def getGraphFromMDP(mdp):
     G = nx.DiGraph()
