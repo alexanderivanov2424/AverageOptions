@@ -23,6 +23,7 @@ from options.OptionClasses.Option import getShortestPathLengthMDP, getShortestPa
 from tqdm import tqdm
 
 import numpy as np
+import gc
 import random
 
 
@@ -98,6 +99,9 @@ def run_agent_on_mdp_online(agent, mdp, instances, episodes, steps, episode_samp
 
                 pbar.update(1)
 
+
             # instance_rewards.append(np.cumsum(episode_rewards))
             instance_rewards.append(episode_rewards)
+            # if instance % 5 == 0:
+            #     gc.collect()
     return instance_rewards
