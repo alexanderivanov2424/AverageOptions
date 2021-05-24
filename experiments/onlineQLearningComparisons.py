@@ -1,142 +1,174 @@
 from simple_rl.tasks import GridWorldMDP, TaxiOOMDP, HanoiMDP#, GymMDP
 from simple_rl.tasks.grid_world.GridWorldMDPClass import make_grid_world_from_file
-
+from simple_rl.tasks.race_track.RaceTrackMDPClass import make_race_track_from_file
 
 # options
-from options.option_generation.fiedler_options import FiedlerOptions
-from options.option_generation.eigenoptions import Eigenoptions
-from options.option_generation.betweenness_options import BetweennessOptions
-from options.option_generation.ASPDM_options import AverageShortestOptions
-from new_experiments.ApproxAverageOptions import ApproxAverageOptions
+from options.FiedlerOptions import FiedlerOptions
+from options.EigenOptions import Eigenoptions
+from options.AverageOptions import AverageShortestOptions
+from options.ApproxAverageOptions import ApproxAverageOptions
+from options.HittingOptions import HittingTimeOptions
 
-from options.option_generation.graph_drawing_options import GraphDrawingOptions
-from options.graph.cover_time import ComputeCoverTime
-from options.graph.spectrum import ComputeConnectivity
-from options.option_generation.util import GetAdjacencyMatrix, GetIncidenceMatrix
+from options.graph.mdp import GetAdjacencyMatrix
 
 from simple_rl.agents import QLearningAgent, LinearQAgent, RandomAgent#, DQNAgent
-from new_experiments.run_experiments import run_agents_on_mdp
-from simple_rl.abstraction import AbstractionWrapper, aa_helpers, ActionAbstraction, OnlineAbstractionWrapper
+from experiments.run_online_experiments import train_agents_on_mdp_online#, QLearn_mdp_offline
+
+# from options.OptionClasses.PointOptionMDPWrapperClass import PointOptionMDP
+from options.OptionClasses.Option import Option, getGraphFromMDP, constructOptionObject, constructPointOptionObject, getGraphFromExp
+from options.OptionClasses.OptionAgent import OptionAgent
+from options.OptionGeneration import GetOptions
 
 import matplotlib
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+from scipy.ndimage.filters import gaussian_filter1d
+
 
 import numpy as np
 import scipy.stats
 import gc
-import csv
-import os
+import random
+
+import json
 
 import networkx as nx
 
-
 matplotlib.style.use('default')
 
-def build_online_subgoal_option_agent(mdp, agent=QLearningAgent, n_ops=4, freqs=100, episodes = 10, steps = 10, method='eigen', name='-online-op'):
-    goal_based_aa = ActionAbstraction(prim_actions=mdp.get_actions(), use_prims=True)
+use_ASPDM = True
 
-    option_agent = OnlineAbstractionWrapper(agent, agent_params={"actions":mdp.get_actions()},
-        action_abstr=goal_based_aa, name_ext=name, n_ops=n_ops, freqs=freqs, op_n_episodes=episodes, op_n_steps=steps, max_ops=32, method=method, mdp=mdp)
+def make_option_agent(mdp, nx_graph, Matrix, intToS, method='eigen'):
+    A = Matrix.copy()
 
-    return option_agent
+    def call_back(num_options, experiences=None):
+        if experiences != None:
+            exp_nx_graph, exp_matrix, exp_intToS = getGraphFromExp(experiences, nx_graph)
+            _, option_i_pairs, _ = GetOptions(exp_matrix, num_options, method, verbose=False)
+            options = [constructPointOptionObject(option_i_pair, nx_graph, intToS) for option_i_pair in option_i_pairs]
+            return options
+        else:
+            _, option_i_pairs, _ = GetOptions(A, num_options, method)
+            options = [constructPointOptionObject(option_i_pair, nx_graph, intToS) for option_i_pair in option_i_pairs]
+            return options
 
-def save_exp(exp, exp_name, path="saves//onlineQLearning"):
-    for agent in exp.rewards.keys():
-        folder = path + "//" + exp_name + "//"
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        with open(folder + agent.name + ".csv",'a') as f:
-            writer = csv.writer(f)
-            for instance in exp.rewards[agent].keys():
-                episode_rewards = []
-                for episode in exp.rewards[agent][instance].keys():
-                    episode_rewards.append(exp.rewards[agent][instance][episode])
-                writer.writerow(episode_rewards)
-
-def load_episode_rewards(agent, exp_name, path="saves//onlineQLearning"):
-    instance_reward_lists =[]
-    with open(path + "//" + exp_name + "//" + agent.name + ".csv") as f:
-        reader = csv.reader(f)
-        for row in reader:
-            instance_reward_lists.append(np.array(row, dtype=float))
-    return instance_reward_lists
+    return OptionAgent(method + "-options", mdp.actions, call_back, default_q=1.0, online=True)
 
 
-def make_plot(dom, task="", rand_init_and_goal=False, save_and_load=False, n_options=3, n_instances=10, n_episodes=100, n_steps=500, freqs = 100):
+def make_plot(dom, task="", rand_init_and_goal=True, n_options=8, add_options_n_ep=50, n_instances=10, n_episodes=100, n_steps=500):
+    global use_ASPDM
+    np.random.seed(0)
+    random.seed(0)
+    print("Running:", dom, task)
+
     if dom == 'grid':
-        mdp = make_grid_world_from_file('options/tasks/' + task + '.txt', rand_init_and_goal=rand_init_and_goal)
+        mdp = make_grid_world_from_file('tasks/' + task + '.txt', rand_init_and_goal=rand_init_and_goal, step_cost=0.0)
     elif dom == 'taxi':
         width = 4
         height = 4
         agent = {"x": 1, "y":1, "has_passenger":0}
         passengers = [{"x":3, "y":2, "dest_x":2, "dest_y": 3, "in_taxi":0}]
-        mdp = TaxiOOMDP(width, height, agent, walls=[], passengers=passengers)
+        mdp = TaxiOOMDP(width, height, agent, walls=[], passengers=passengers, step_cost=0.0)
     elif dom == 'gym':
         mdp = GymMDP(env_name=task, render=False)
     elif dom == 'hanoi':
-        mdp = HanoiMDP(num_pegs=3, num_discs=4)
+        mdp = HanoiMDP(num_pegs=3, num_discs=4, rand_init_goal=rand_init_and_goal, step_cost=0.0)
+    elif dom == 'track':
+        mdp = make_race_track_from_file('tasks/' + task + '.txt', rand_init_and_goal=rand_init_and_goal, step_cost=0.0)
     else:
         print('Unknown task name: ', task)
         assert(False)
 
-    origMatrix, intToS = GetAdjacencyMatrix(mdp)
+    nx_graph, A, intToS, _ = getGraphFromMDP(mdp)
 
-    ql_agent = QLearningAgent(actions=mdp.get_actions())
+    eigenAgent = make_option_agent(mdp, nx_graph, A, intToS, "eigen")
+    fiedlerAgent = make_option_agent(mdp, nx_graph, A, intToS, "fiedler")
+    if use_ASPDM:
+        ASPDMAgent = make_option_agent(mdp, nx_graph, A, intToS, "ASPDM")
+    ApproxAverageAgent = make_option_agent(mdp, nx_graph, A, intToS, "ApproxAverage")
+    # HittingAgent = make_option_agent(mdp, nx_graph, A, intToS, "hitting")
+    ql_agent = QLearningAgent(actions=mdp.get_actions(), default_q=1.0)
 
-    rand_agent = RandomAgent(mdp.get_actions())
+    if use_ASPDM:
+        agents = [eigenAgent, fiedlerAgent, ASPDMAgent, ApproxAverageAgent, ql_agent]
+    else:
+        agents = [eigenAgent, fiedlerAgent, ApproxAverageAgent, ql_agent]
+    # agents = [eigenAgent, ASPDMAgent, ApproxAverageAgent, ql_agent]
+    # agents = [eigenAgent, ApproxAverageAgent, ql_agent]
 
-    # TODO: Add an arugment for selecting option generation method.
-    fiedler_agent = build_online_subgoal_option_agent(mdp, agent=QLearningAgent, n_ops=n_options, freqs=freqs, episodes=n_episodes, steps=n_steps, method='fiedler', name='-fiedler')
-    eigen_agent = build_online_subgoal_option_agent(mdp, agent=QLearningAgent, n_ops=n_options, freqs=freqs, episodes=n_episodes, steps=n_steps, method='eigen', name='-eigen')
-    # ASPDM_agent = build_online_subgoal_option_agent(mdp, agent=QLearningAgent, n_ops=n_options, freqs=freqs, episodes=n_episodes, steps=n_steps, method='ASPDM', name='-ASPDM')
-    ApproxAverage_agent = build_online_subgoal_option_agent(mdp, agent=QLearningAgent, n_ops=n_options, freqs=freqs, episodes=n_episodes, steps=n_steps, method='ApproxAverage', name='-ApproxAverage')
-    # bet_agent = build_online_subgoal_option_agent(mdp, agent=QLearningAgent, n_ops=n_options, freqs=freqs, episodes=n_episodes, steps=n_steps, method='bet', name='-bet')
+    #NOTE: do not need to generated options because no experiences yet
+    # for agent in agents:
+    #     if agent == ql_agent:
+    #         continue
+    #     agent.generate_options(n_options)
 
-    exp = run_agents_on_mdp([fiedler_agent, eigen_agent, ApproxAverage_agent, ql_agent, rand_agent], mdp,
-        instances=n_instances, episodes=n_episodes, steps=n_steps, track_reward='sum', track_disc_reward=True, reset_at_terminal=False)
+    experiment = train_agents_on_mdp_online(agents, mdp, instances=n_instances, episodes=n_episodes, steps=n_steps, episode_sample_rate = 1, add_options_n_ep=add_options_n_ep, num_ops_add=n_options)
 
+    # for s in eigenAgent.q_func:
+    #     print(s, end=" ")
+    #     max_a = None
+    #     for a in eigenAgent.q_func[s]:
+    #         if max_a == None or eigenAgent.q_func[s][a] > eigenAgent.q_func[s][max_a]:
+    #             max_a = a
+    #             continue
+    #     print(max_a)
 
-    if save_and_load:
-        save_exp(exp, dom + task)
+    color_dict = {  "eigen-options":"tab:blue",
+                    "fiedler-options":"tab:orange",
+                    "ASPDM-options":"tab:green",
+                    "ApproxAverage-options":"tab:red",
+                    "hitting-options":"cyan",
+                    "Q-learning":"black",
+                    "Random":"tab:purple",
+                    }
 
-    for agent in exp.rewards.keys():
+    fig, ax = plt.subplots()
 
-        instance_reward_lists = []
-        if save_and_load:
-            instance_reward_lists = load_episode_rewards(agent, dom + task)
-            instance_reward_lists = np.cumsum(instance_reward_lists, axis=1)
-        else:
-            for instance in exp.rewards[agent].keys():
-                episode_rewards = []
-                for episode in exp.rewards[agent][instance].keys():
-                    episode_rewards.append(exp.rewards[agent][instance][episode])
-                instance_reward_lists.append(np.cumsum(episode_rewards))
-
-        #averaged over instances
-        data = np.array(instance_reward_lists)
+    for agent_name in experiment.keys():
+        data = np.array(experiment[agent_name])
+        data = np.apply_along_axis(lambda x: np.convolve(x, np.ones(10)/10, "valid"), 1, data)
         Y = np.mean(data, axis=0)
-        std = scipy.stats.sem(data, axis=0)
-        conf = std * scipy.stats.t.ppf((1 + .95) / 2., len(Y)-1)
-        plt.fill_between(range(len(Y)), Y + conf, Y - conf, alpha=0.25)
-        plt.plot(Y, label=agent.name)
+        se = scipy.stats.sem(data, axis=0)
+        conf = se * scipy.stats.t.ppf((1 + .8) / 2., len(Y)-1)
+        plt.fill_between(range(len(Y)), Y + conf, Y - conf, color=color_dict[agent_name], alpha=0.25)
+        plt.plot(range(len(Y)), Y, color=color_dict[agent_name], label=agent_name)
 
     plt.title(dom + "  " + task)
     plt.xlabel('episode')
-    plt.ylabel('cumulative reward')
+    plt.ylabel('reward')
     plt.legend()
-    plt.show(block=True)
+    exp_name = task if dom == 'grid' else dom
+    filename = f'online_{exp_name}_inst{n_instances}_ep{n_episodes}_op{n_options}'
+    plt.savefig('Plots/' + filename + '.png')
+    # plt.show(block=True)
     gc.collect()
+    plt.cla()
+
+    with open('PlotData/' + filename + '.json', "w") as file:
+        json.dump(experiment, file)
 
 
-SAVE = False
-n_options = 4
-n_instances = 10
-episodes = 100
-make_plot("grid", task="9x9grid", save_and_load=SAVE, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=100, freqs=10000)
-make_plot("grid", task="fourroom", save_and_load=SAVE, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=500, freqs=10000)
-make_plot("hanoi", save_and_load=SAVE, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=500, freqs=10000)
-make_plot("taxi", save_and_load=SAVE, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=500, freqs=10000)
-# make_plot("grid", task="Parr", rand_init_and_goal=True, save_and_load=True, n_options=n_options, n_instances=n_instances, n_episodes=100, n_steps=500, freqs=10000)
-# make_plot("grid", task="Track2", rand_init_and_goal=True, save_and_load=False, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=500, freqs=10000)
+np.random.seed(0)
+random.seed(0)
+
+RAND_INIT = True
+n_options = 8#8
+add_options_n_ep = 50
+n_instances = 100 #200
+episodes = 300 #100
+
+use_ASPDM = False
+# make_plot("grid", task="9x9grid", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
+# make_plot("grid", task="fourroom", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
+# make_plot("hanoi", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
+
+use_ASPDM = False
+# make_plot("track", task="Track3", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
+# make_plot("taxi", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=100, add_options_n_ep=add_options_n_ep)
+n_options = 16
+make_plot("grid", task="Parr", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=300, add_options_n_ep=add_options_n_ep)
+
+# make_plot("grid", task="tworoom", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50)
+# make_plot("grid", task="twohall", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50)
+# make_plot("grid", task="ParrUp", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=100)

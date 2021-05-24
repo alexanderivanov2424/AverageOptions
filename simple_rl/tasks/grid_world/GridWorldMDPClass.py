@@ -249,6 +249,12 @@ class GridWorldMDP(MDP):
             while self.goal_locs[0] in self.walls:
                 self.goal_locs = [(random.randint(1, self.width), random.randint(1, self.height))]
 
+    def reset_goal(self):
+        if self.rand_goal:
+            self.goal_locs = [(random.randint(1, self.width), random.randint(1, self.height))]
+            while self.goal_locs[0] in self.walls:
+                self.goal_locs = [(random.randint(1, self.width), random.randint(1, self.height))]
+
     def reset(self):
         self.cur_state = copy.deepcopy(self.init_state)
 

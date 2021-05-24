@@ -6,6 +6,7 @@ import random
 import sys, os
 import numpy as np
 from collections import defaultdict
+import copy
 
 # Other imports.
 from simple_rl.mdp.MDPClass import MDP
@@ -52,18 +53,13 @@ class RaceTrackMDP(MDP):
         # Setup init location.
         self.rand_init = rand_init
         self.rand_goal = rand_goal
-        if rand_init:
-            init_loc = random.randint(1, width), random.randint(1, height)
-            while init_loc in walls:
-                init_loc = random.randint(1, width), random.randint(1, height)
-        if rand_goal:
-            goal_locs = [(random.randint(1, width), random.randint(1, height))]
-            while goal_locs[0] in walls:
-                goal_locs = [(random.randint(1, width), random.randint(1, height))]
-        self.init_loc = init_loc
-        init_state = RaceTrackState(init_loc[0], init_loc[1], 0, 0)
 
-        MDP.__init__(self, RaceTrackMDP.ACTIONS, self._transition_func, self._reward_func, init_state=init_state, gamma=gamma)
+        self.init_loc = copy.deepcopy(init_loc)
+        self.init_state = RaceTrackState(init_loc[0], init_loc[1], 0, 0)
+
+        MDP.__init__(self, RaceTrackMDP.ACTIONS, self._transition_func, self._reward_func, init_state=self.init_state, gamma=gamma)
+
+        self.init_state = RaceTrackState(init_loc[0], init_loc[1], 0, 0)
 
         if type(goal_locs) is not list:
             raise ValueError("(simple_rl) GridWorld Error: argument @goal_locs needs to be a list of locations. For example: [(3,3), (4,3)].")
@@ -78,6 +74,9 @@ class RaceTrackMDP(MDP):
         self.slip_prob = slip_prob
         self.name = name
         self.lava_locs = lava_locs
+
+    def get_init_state(self):
+        return self.init_state
 
     def get_parameters(self):
         '''
@@ -100,6 +99,9 @@ class RaceTrackMDP(MDP):
 
         return param_dict
 
+    def get_actions(self):
+        return ["up", "down", "left", "right", "neutral", "upright", "upleft", "downright", "downleft"]
+
     def set_slip_prob(self, slip_prob):
         self.slip_prob = slip_prob
 
@@ -109,7 +111,7 @@ class RaceTrackMDP(MDP):
     def is_goal_state(self, state):
         return (state.x, state.y) in self.goal_locs
 
-    def _reward_func(self, state, action):
+    def _reward_func(self, state, action, next_state):
         '''
         Args:
             state (State)
@@ -118,10 +120,8 @@ class RaceTrackMDP(MDP):
         Returns
             (float)
         '''
-        if self._is_goal_state_action(state, action):
+        if (next_state.x, next_state.y) in self.goal_locs:
             return 1.0 - self.step_cost
-        elif (int(state.x), int(state.y)) in self.lava_locs:
-            return -self.lava_cost
         else:
             return 0 - self.step_cost
 
@@ -152,11 +152,13 @@ class RaceTrackMDP(MDP):
         Returns
             (State)
         '''
-        if state.is_terminal():
-            return state
 
         vx = state.vx
         vy = state.vy
+
+        newx = copy.deepcopy(state.x) + copy.deepcopy(state.vx)
+        newy = copy.deepcopy(state.y) + copy.deepcopy(state.vy)
+
         if action == "up":
             vy += 1
         elif action == "down":
@@ -178,31 +180,20 @@ class RaceTrackMDP(MDP):
             vx -= 1
             vy -= 1
 
-        if vx == 0 and vy == 0:
-           if random.random() < 0.5:
-              vx = 1
-           else:
-              vy = 1
-
-        if vx > 3:
-           vx = 3
-        if vx < -3:
-           vx = -3
-        if vy > 3:
-           vy = 3
-        if vy < -3:
-           vy = -3
+        vx = min(3, max(-3, vx))
+        vy = min(3, max(-3, vy))
 
         # print('state=', state)
-        if 0 < state.x + state.vx and state.x + state.vx <= self.width and 0 <= state.y + state.vy and state.y + state.vy <= self.height and not self.is_wall(state.x + state.vx, state.y + state.vy):
-            next_state = RaceTrackState(state.x + state.vx, state.y + state.vy, vx, vy)
+        if newx > 0 and newx <= self.width and newy > 0 and newy <= self.height and not self.is_wall(newx, newy):
+            next_state = RaceTrackState(newx, newy, vx, vy)
         else:
-            # print('Back to the initial state')
-            next_state = RaceTrackState(self.init_state.x, self.init_state.y, 0, 0)
+            # next_state = RaceTrackState(self.init_loc[0], self.init_loc[1], 0, 0)
+            next_state = RaceTrackState(copy.deepcopy(state.x), copy.deepcopy(state.y), vx, vy)
 
         if (next_state.x, next_state.y) in self.goal_locs and self.is_goal_terminal:
             next_state.set_terminal(True)
 
+        # print(next_state.x, next_state.y, self.goal_locs[0], next_state.is_terminal())
         return next_state
 
     def is_wall(self, x, y):
@@ -229,27 +220,32 @@ class RaceTrackMDP(MDP):
     def get_lava_locs(self):
         return self.lava_locs
 
-
     def reset_init_and_goal(self):
-        if self.rand_init:
+        init_loc = random.randint(1, self.width), random.randint(1, self.height)
+        while init_loc in self.walls:
             init_loc = random.randint(1, self.width), random.randint(1, self.height)
-            self.cur_state = GridWorldState(init_loc[0], init_loc[1])
-            self.init_loc = init_loc
-        else:
-            self.cur_state = copy.deepcopy(self.init_state)
 
-        if self.rand_goal:
+        self.cur_state = RaceTrackState(init_loc[0], init_loc[1], 0, 0)
+        self.init_state = RaceTrackState(init_loc[0], init_loc[1], 0, 0)
+        self.init_loc = init_loc
+
+        self.goal_locs = [(random.randint(1, self.width), random.randint(1, self.height))]
+        while self.goal_locs[0] in self.walls:
             self.goal_locs = [(random.randint(1, self.width), random.randint(1, self.height))]
-            while self.goal_locs[0] in self.walls:
-                self.goal_locs = [(random.randint(1, self.width), random.randint(1, self.height))]
+
+    def reset_goal(self):
+        self.goal_locs = [(random.randint(1, self.width), random.randint(1, self.height))]
+        while self.goal_locs[0] in self.walls:
+            self.goal_locs = [(random.randint(1, self.width), random.randint(1, self.height))]
 
     def reset(self):
-        if self.rand_init:
-            init_loc = random.randint(1, self.width), random.randint(1, self.height)
-            self.cur_state = GridWorldState(init_loc[0], init_loc[1])
-            self.init_loc = init_loc
-        else:
-            self.cur_state = GridWorldState(self.init_loc[0], self.init_loc[1])
+        # if self.rand_init:
+        #     init_loc = random.randint(1, self.width), random.randint(1, self.height)
+        #     self.cur_state = RaceTrackState(init_loc[0], init_loc[1], 0, 0)
+        #     self.init_loc = init_loc
+        # else:
+        # self.cur_state = copy.deepcopy(self.init_state)
+        self.cur_state = RaceTrackState(self.init_loc[0], self.init_loc[1], 0, 0)
 
 
 
@@ -282,7 +278,6 @@ def make_race_track_from_file(file_name, randomize=False, rand_init_and_goal=Fal
     # Get walls, agent, goal loc.
     num_rows = len(wall_lines)
     num_cols = len(wall_lines[0].strip())
-    empty_cells = []
     agent_x, agent_y = 1, 1
     walls = []
     goal_locs = []
@@ -300,30 +295,23 @@ def make_race_track_from_file(file_name, randomize=False, rand_init_and_goal=Fal
             elif ch == "a":
                 agent_x, agent_y = j + 1, num_rows - i
             elif ch == "-":
-                empty_cells.append((j + 1, num_rows - i))
+                pass
+                # empty_cells.append((j + 1, num_rows - i))
 
     if goal_num is not None:
         goal_locs = [goal_locs[goal_num % len(goal_locs)]]
-
-    if randomize:
-        agent_x, agent_y = random.choice(empty_cells)
-        if len(goal_locs) == 0:
-            # Sample @num_goals random goal locations.
-            goal_locs = random.sample(empty_cells, num_goals)
-        else:
-            goal_locs = random.sample(goal_locs, num_goals)
 
     if len(goal_locs) == 0:
         goal_locs = [(num_cols, num_rows)]
 
     return RaceTrackMDP(width=num_cols, height=num_rows, init_loc=(agent_x, agent_y), goal_locs=goal_locs, rand_init=rand_init_and_goal, rand_goal=rand_init_and_goal, lava_locs=lava_locs, walls=walls, name=name, step_cost=step_cost, slip_prob=slip_prob)
 
-    def reset(self):
-        if self.rand_init:
-            init_loc = random.randint(1, width), random.randint(1, height)
-            self.cur_state = RaceTrackState(init_loc[0], init_loc[1])
-        else:
-            self.cur_state = copy.deepcopy(self.init_state)
+    # def reset(self):
+    #     if self.rand_init:
+    #         init_loc = random.randint(1, width), random.randint(1, height)
+    #         self.cur_state = RaceTrackState(init_loc[0], init_loc[1])
+    #     else:
+    #         self.cur_state = copy.deepcopy(self.init_state)
 
 def main():
     grid_world = RaceTrackMDP(5, 10, (1, 1), (6, 7))

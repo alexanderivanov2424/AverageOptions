@@ -13,6 +13,7 @@ Author: David Abel (cs.brown.edu/~dabel/)
 from __future__ import print_function
 import random
 import copy
+import numpy as np
 
 # Other imports.
 from simple_rl.mdp.oomdp.OOMDPClass import OOMDP
@@ -236,6 +237,20 @@ class TaxiOOMDP(OOMDP):
                     agent.set_attribute("has_passenger", 0)
 
         return next_state
+
+    def reset_init_and_goal(self):
+        agent = self.init_state.get_first_obj_of_class("agent")
+        agent.set_attribute("x", np.random.randint(1, 1 + self.width))
+        agent.set_attribute("y", np.random.randint(1, 1 + self.height))
+
+        for passenger in self.init_state.get_objects_of_class("passenger"):
+            passenger.set_attribute('x', np.random.randint(1, 1 + self.width))
+            passenger.set_attribute('y', np.random.randint(1, 1 + self.height))
+
+    def reset_goal(self):
+        for passenger in self.init_state.get_objects_of_class("passenger"):
+            passenger.set_attribute('x', np.random.randint(self.width))
+            passenger.set_attribute('y', np.random.randint(self.height))
 
 def _error_check(state, action):
     '''

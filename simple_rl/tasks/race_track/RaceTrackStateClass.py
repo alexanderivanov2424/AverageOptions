@@ -10,8 +10,8 @@ class RaceTrackState(State):
         State.__init__(self, data=[x, y, vx, vy])
         self.x = round(x, 5)
         self.y = round(y, 5)
-        self.vx = vx
-        self.vy = vy
+        self.vx = round(vx, 5)
+        self.vy = round(vy, 5)
 
     def __hash__(self):
         return hash(tuple(self.data))

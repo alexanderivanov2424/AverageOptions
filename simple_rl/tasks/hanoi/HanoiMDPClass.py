@@ -123,6 +123,19 @@ class HanoiMDP(MDP):
                     goal_state[i] = " "
             self.goal_state = State(data=goal_state)
 
+    def reset_goal(self):
+        if self.rand_init_goal:
+            goal_state = ["" for peg in range(self.num_pegs)]
+            for i in range(self.num_discs):
+                goal_state[random.randint(0,self.num_pegs-1)] += chr(97 + i)
+            for i in range(self.num_pegs):
+                if goal_state[i] == "":
+                    goal_state[i] = " "
+            self.goal_state = State(data=goal_state)
+
+    def get_terminal_state(self):
+        return copy.deepcopy(self.goal_state)
+
     def _is_goal_state(self, state):
         '''
         Args:
@@ -141,7 +154,7 @@ class HanoiMDP(MDP):
         # return False
 
     def reset(self):
-        self.cur_state = copy.deepcopy(self.init_state)
+        self.cur_state = State(data=copy.deepcopy(self.init_state.data))
 
 
 

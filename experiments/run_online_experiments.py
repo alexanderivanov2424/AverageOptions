@@ -26,19 +26,19 @@ import numpy as np
 import random
 
 
-def train_agents_on_mdp(agents, mdp, graph, instances=10, episodes=100, steps=500, episode_sample_rate = 1):
+def train_agents_on_mdp_online(agents, mdp, instances=10, episodes=100, steps=500, episode_sample_rate = 1, add_options_n_ep=None, num_ops_add=4):
 
     data_dict = {}
 
     for agent in agents:
-        data = run_agent_on_mdp(agent, mdp, graph, instances=instances, episodes=episodes, steps=steps, episode_sample_rate=episode_sample_rate)
+        data = run_agent_on_mdp_online(agent, mdp, instances=instances, episodes=episodes, steps=steps, episode_sample_rate=episode_sample_rate, add_options_n_ep=add_options_n_ep, num_ops_add=num_ops_add)
         data_dict[agent.name] = data
 
     return data_dict
 
 
 
-def run_agent_on_mdp(agent, mdp, graph, instances, episodes, steps, episode_sample_rate):
+def run_agent_on_mdp_online(agent, mdp, instances, episodes, steps, episode_sample_rate, add_options_n_ep=None, num_ops_add=1):
 
     print(f"Training {agent.name}")
 
@@ -46,18 +46,22 @@ def run_agent_on_mdp(agent, mdp, graph, instances, episodes, steps, episode_samp
     with tqdm(total=instances * episodes) as pbar:
         for instance in range(instances):
             agent.reset()
+            if hasattr(agent, 'clear_options'):
+                agent.clear_options()
             episode_rewards = []
 
             np.random.seed(instance)
             random.seed(instance)
 
-            # mdp.reset_init_and_goal()
-
-            optimal_path_length = getShortestPathLengthGraph(mdp, graph)
-            optimal_return = 1 * mdp.gamma ** optimal_path_length
+            mdp.reset_init_and_goal()
 
             for episode in range(episodes):
+                if hasattr(agent, 'generate_options') and add_options_n_ep:
+                    if episode != 0 and episode % add_options_n_ep == 0:
+                        agent.generate_options(num_ops_add)
+
                 mdp.reset()
+
                 state = mdp.get_init_state()
                 agent.end_of_episode()
                 reward = 0
@@ -74,12 +78,12 @@ def run_agent_on_mdp(agent, mdp, graph, instances, episodes, steps, episode_samp
                     reward, next_state = mdp.execute_agent_action(action)
                     terminal = next_state.is_terminal()
                     timeout = step == steps
-                    # print(state, action, next_state, terminal, timeout)
                     agent.update(state, action, reward, next_state, terminal, timeout)
 
                     episode_reward += reward * mdp.gamma ** step
 
                     if terminal or timeout: #timeout happens anyway this happens anyway
+                        mdp.reset_goal()
                         break
                         # mdp.reset()
                         # agent.end_of_episode()
@@ -89,7 +93,6 @@ def run_agent_on_mdp(agent, mdp, graph, instances, episodes, steps, episode_samp
                     state = next_state
 
                 if episode % episode_sample_rate == 0:
-                    # episode_rewards.append(episode_reward/optimal_return)
                     episode_rewards.append(episode_reward)
                     # episode_rewards.append(step)
 

@@ -14,7 +14,7 @@ from simple_rl.agents.AgentClass import Agent
 class OptionAgent(Agent):
     ''' Implementation for a Q Learning Agent '''
 
-    def __init__(self, name, actions, option_method=None, option_freq=1000, option_max=32, alpha=0.1, gamma=0.95,
+    def __init__(self, name, actions, option_method=None, online=False, option_freq=1000, option_max=8, alpha=0.1, gamma=0.95,
                 epsilon=0.1, default_q=1.0, option_q=1.0):
 
         Agent.__init__(self, name=name, actions=actions, gamma=gamma)
@@ -37,6 +37,9 @@ class OptionAgent(Agent):
         self.prev_state = None
         self.prev_action = None
 
+        self.online = online
+        self.experiences = []
+
         self.options = []
 
         self.in_option = False
@@ -50,7 +53,12 @@ class OptionAgent(Agent):
         self.primatives_executed = 0
 
     def generate_options(self, num_options):
-        self.options.extend(self.option_method(num_options, None))
+        if len(self.options) >= self.option_max:
+            return
+        if self.online:
+            self.options.extend(self.option_method(num_options, self.experiences))
+        else:
+            self.options.extend(self.option_method(num_options))
 
     def get_available_options(self, state):
         options = []
@@ -99,11 +107,13 @@ class OptionAgent(Agent):
         return action
 
     def update(self, state, action, reward, next_state, terminal, timeout):
+        if self.online:
+            self.experiences.append((state, action, next_state))
         #always update primatives regardless of options taken
         self.update_q_func(state, action, reward, next_state, terminal)
 
         if self.in_option:
-            self.option_reward += reward * self.gamma**self.option_step
+            self.option_reward += reward# * self.gamma**self.option_step
             if self.options[self.cur_option].is_termination_state(next_state): #hit the termination set of the option
                 self.just_finished_option = True
 
@@ -129,6 +139,7 @@ class OptionAgent(Agent):
 
 
     def update_q_func(self, state, action, reward, next_state, terminal, option_len=1):
+        option_len=1
         # Update the Q Function.
         max_q_curr_state = self.get_max_q_value(next_state) * (0 if terminal else 1)
         prev_q_val = self.get_q_value(state, action)
@@ -177,7 +188,7 @@ class OptionAgent(Agent):
             self.q_func[state][action] = q
             return q
 
-    def clear_options():
+    def clear_options(self):
         self.options = []
 
     def reset(self):

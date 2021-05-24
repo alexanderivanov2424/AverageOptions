@@ -1,7 +1,7 @@
-a------wwwwwwwwwwwwwwwwwwww-------
--------wwwwwwwwwwwwwwwwwwww-------
--------wwwwwwwwwwwwwwwwwwww-------
-----------------------------------
--------wwwwwwwwwwwwwwwwwwww-------
--------wwwwwwwwwwwwwwwwwwww-------
--------wwwwwwwwwwwwwwwwwwww------g
+a------wwwwwwwwww-------
+-------wwwwwwwwww-------
+-------wwwwwwwwww-------
+------------------------
+-------wwwwwwwwww-------
+-------wwwwwwwwww-------
+-------wwwwwwwwww------g
