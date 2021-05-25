@@ -20,7 +20,7 @@ def ApproxAverageOptions(G,k):
     D_dict = nx.all_pairs_shortest_path_length(nx.to_networkx_graph(A))
     D = np.zeros(A.shape,dtype='int')
     for source in D_dict:
-        for target in range(len(A)):
+        for target in source[1].keys():
             D[source[0],target] = source[1][target]
 
     def cost(S):
