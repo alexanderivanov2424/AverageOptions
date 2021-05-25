@@ -153,7 +153,7 @@ np.random.seed(0)
 random.seed(0)
 
 RAND_INIT = True
-n_options = 8#8
+n_options = 4#8
 add_options_n_ep = 50
 n_instances = 100 #200
 episodes = 300 #100
@@ -166,7 +166,7 @@ use_ASPDM = False
 use_ASPDM = False
 # make_plot("track", task="Track3", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
 make_plot("taxi", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=100, add_options_n_ep=add_options_n_ep)
-n_options = 8
+n_options = 4
 make_plot("grid", task="Parr", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=300, add_options_n_ep=add_options_n_ep)
 
 # make_plot("grid", task="tworoom", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50)
