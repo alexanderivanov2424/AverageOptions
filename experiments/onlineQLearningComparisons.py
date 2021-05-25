@@ -139,7 +139,7 @@ def make_plot(dom, task="", rand_init_and_goal=True, n_options=8, add_options_n_
     plt.ylabel('reward')
     plt.legend()
     exp_name = task if dom == 'grid' else dom
-    filename = f'online_{exp_name}_inst{n_instances}_ep{n_episodes}_op{n_options}'
+    filename = f'online_TEST_{exp_name}_inst{n_instances}_ep{n_episodes}_op{n_options}'
     plt.savefig('Plots/' + filename + '.png')
     # plt.show(block=True)
     gc.collect()
@@ -159,15 +159,15 @@ n_instances = 100 #200
 episodes = 300 #100
 
 use_ASPDM = False
-# make_plot("grid", task="9x9grid", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
-# make_plot("grid", task="fourroom", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
-# make_plot("hanoi", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
+make_plot("grid", task="9x9grid", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
+make_plot("grid", task="fourroom", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
+make_plot("hanoi", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
 
 use_ASPDM = False
-# make_plot("track", task="Track3", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
-make_plot("taxi", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=100, add_options_n_ep=add_options_n_ep)
+make_plot("track", task="Track3", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
+# make_plot("taxi", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=100, add_options_n_ep=add_options_n_ep)
 n_options = 4
-make_plot("grid", task="Parr", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=300, add_options_n_ep=add_options_n_ep)
+# make_plot("grid", task="Parr", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=300, add_options_n_ep=add_options_n_ep)
 
 # make_plot("grid", task="tworoom", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50)
 # make_plot("grid", task="twohall", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50)

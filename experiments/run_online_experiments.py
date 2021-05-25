@@ -84,7 +84,8 @@ def run_agent_on_mdp_online(agent, mdp, instances, episodes, steps, episode_samp
                     episode_reward += reward * mdp.gamma ** step
 
                     if terminal or timeout: #timeout happens anyway this happens anyway
-                        mdp.reset_goal()
+                        if terminal:
+                            mdp.reset_goal()
                         break
                         # mdp.reset()
                         # agent.end_of_episode()
