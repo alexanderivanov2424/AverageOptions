@@ -46,9 +46,8 @@ def ApproxAverageOptions(G,k):
 
     def get_trees(S):
         paths = nx.multi_source_dijkstra_path(graph, list(S))
-        A_ = np.zeros((len(A),len(A)))
-        for i in range(len(A)):
-            path = paths[i]
+        A_ = np.zeros(A.shape)
+        for path in paths:
             for j in range(0,len(path)-1):
                 A_[path[j],path[j+1]] = 1
         components = nx.connected_components(nx.to_networkx_graph(A_))

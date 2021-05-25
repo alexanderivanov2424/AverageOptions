@@ -14,7 +14,7 @@ from simple_rl.agents.AgentClass import Agent
 class OptionAgent(Agent):
     ''' Implementation for a Q Learning Agent '''
 
-    def __init__(self, name, actions, option_method=None, online=False, option_freq=1000, option_max=32, alpha=0.1, gamma=0.95,
+    def __init__(self, name, actions, option_method=None, online=False, option_freq=1000, option_max=16, alpha=0.1, gamma=0.95,
                 epsilon=0.1, default_q=1.0, option_q=1.0):
 
         Agent.__init__(self, name=name, actions=actions, gamma=gamma)
@@ -56,9 +56,11 @@ class OptionAgent(Agent):
         if len(self.options) >= self.option_max:
             return
         if self.online:
-            self.options.extend(self.option_method(num_options, self.experiences))
+            new_ops = self.option_method(num_options, self.experiences)
         else:
-            self.options.extend(self.option_method(num_options))
+            new_ops = self.option_method(num_options)
+
+        self.options.extend(new_ops)
 
     def get_available_options(self, state):
         options = []

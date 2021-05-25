@@ -252,6 +252,12 @@ class TaxiOOMDP(OOMDP):
             passenger.set_attribute('x', np.random.randint(self.width))
             passenger.set_attribute('y', np.random.randint(self.height))
 
+    def reset_init(self):
+        agent = self.init_state.get_first_obj_of_class("agent")
+        agent.set_attribute("x", np.random.randint(1, 1 + self.width))
+        agent.set_attribute("y", np.random.randint(1, 1 + self.height))
+
+
 def _error_check(state, action):
     '''
     Args:

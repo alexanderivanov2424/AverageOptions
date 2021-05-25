@@ -85,7 +85,7 @@ def run_agent_on_mdp_online(agent, mdp, instances, episodes, steps, episode_samp
 
                     if terminal or timeout: #timeout happens anyway this happens anyway
                         if terminal:
-                            mdp.reset_goal()
+                            mdp.reset_init()
                         break
                         # mdp.reset()
                         # agent.end_of_episode()

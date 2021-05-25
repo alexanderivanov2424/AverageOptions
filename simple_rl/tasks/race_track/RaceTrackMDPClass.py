@@ -238,6 +238,15 @@ class RaceTrackMDP(MDP):
         while self.goal_locs[0] in self.walls:
             self.goal_locs = [(random.randint(1, self.width), random.randint(1, self.height))]
 
+    def reset_init(self):
+        init_loc = random.randint(1, self.width), random.randint(1, self.height)
+        while init_loc in self.walls:
+            init_loc = random.randint(1, self.width), random.randint(1, self.height)
+
+        self.cur_state = RaceTrackState(init_loc[0], init_loc[1], 0, 0)
+        self.init_state = RaceTrackState(init_loc[0], init_loc[1], 0, 0)
+        self.init_loc = init_loc
+        
     def reset(self):
         # if self.rand_init:
         #     init_loc = random.randint(1, self.width), random.randint(1, self.height)
