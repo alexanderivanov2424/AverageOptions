@@ -51,7 +51,7 @@ def run_agent_on_mdp(agent, mdp, graph, instances, episodes, steps, episode_samp
             np.random.seed(instance)
             random.seed(instance)
 
-            # mdp.reset_init_and_goal()
+            mdp.reset_init_and_goal()
 
             optimal_path_length = getShortestPathLengthGraph(mdp, graph)
             optimal_return = 1 * mdp.gamma ** optimal_path_length

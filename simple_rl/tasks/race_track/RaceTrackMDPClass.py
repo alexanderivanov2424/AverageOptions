@@ -120,7 +120,7 @@ class RaceTrackMDP(MDP):
         Returns
             (float)
         '''
-        if (next_state.x, next_state.y) in self.goal_locs:
+        if (next_state.x, next_state.y) in self.goal_locs or (state.x, state.y) in self.goal_locs:
             return 1.0 - self.step_cost
         else:
             return 0 - self.step_cost
@@ -246,7 +246,7 @@ class RaceTrackMDP(MDP):
         self.cur_state = RaceTrackState(init_loc[0], init_loc[1], 0, 0)
         self.init_state = RaceTrackState(init_loc[0], init_loc[1], 0, 0)
         self.init_loc = init_loc
-        
+
     def reset(self):
         # if self.rand_init:
         #     init_loc = random.randint(1, self.width), random.randint(1, self.height)

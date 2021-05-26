@@ -51,7 +51,7 @@ def make_option_agent(mdp, nx_graph, Matrix, intToS, method='eigen'):
         options = [constructPointOptionObject(option_i_pair, nx_graph, intToS) for option_i_pair in option_i_pairs]
         return options
 
-    return OptionAgent(method + "-options", mdp.actions, call_back, default_q=1.0, alpha=.9)
+    return OptionAgent(method + "-options", mdp.actions, call_back, default_q=1.0, option_q=1.0, alpha=.1)
 
 
 def make_plot(dom, task="", rand_init_and_goal=True, n_options=8, n_instances=10, n_episodes=100, n_steps=500):
@@ -86,7 +86,7 @@ def make_plot(dom, task="", rand_init_and_goal=True, n_options=8, n_instances=10
         ASPDMAgent = make_option_agent(mdp, nx_graph, A, intToS, "ASPDM")
     ApproxAverageAgent = make_option_agent(mdp, nx_graph, A, intToS, "ApproxAverage")
     # HittingAgent = make_option_agent(mdp, nx_graph, A, intToS, "hitting")
-    ql_agent = QLearningAgent(actions=mdp.get_actions(), default_q=1.0, alpha=.9)
+    ql_agent = QLearningAgent(actions=mdp.get_actions(), default_q=1.0, alpha=.1)
 
     if use_ASPDM:
         agents = [eigenAgent, fiedlerAgent, ASPDMAgent, ApproxAverageAgent, ql_agent]
@@ -160,7 +160,7 @@ episodes = 100 #100
 # make_plot("hanoi", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50)
 
 use_ASPDM = False
-make_plot("track", task="Track3", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=100)
+make_plot("track", task="Track2", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=100)
 # make_plot("taxi", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=100)
 # make_plot("grid", task="Parr", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=300)
 
