@@ -7,9 +7,7 @@ import matplotlib.path as mpath
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 
-
-
-def plot(prefix, exp_name, n_instances, n_episodes, n_options):
+def plot_exp(prefix, exp_name, n_instances, n_episodes, n_options):
     filename = f'{prefix}_{exp_name}_inst{n_instances}_ep{n_episodes}_op{n_options}'
 
     with open('PlotData/' + filename + '.json', "r") as file:
@@ -36,19 +34,26 @@ def plot(prefix, exp_name, n_instances, n_episodes, n_options):
         plt.fill_between(range(len(Y)), Y + conf, Y - conf, color=color_dict[agent_name], alpha=0.25)
         plt.plot(range(len(Y)), Y, color=color_dict[agent_name], label=agent_name)
 
-    plt.title(exp_name)
+    # plt.title(exp_name)
     plt.xlabel('episode')
-    plt.ylabel('reward')
+    plt.ylabel('fraction of maximum return')
     plt.legend()
     plt.show(block=True)
 
 
-plot('offline_TEST', '9x9grid', 100, 100, 8)
-plot('offline_TEST', 'fourroom', 100, 100, 8)
-plot('offline_TEST', 'hanoi', 100, 100, 8)
-plot('offline_TEST', 'track', 100, 100, 8)
-plot('offline_TEST', 'taxi', 100, 100, 8)
-plot('offline_TEST', 'Parr', 100, 200, 16)
+# plot_exp('offline_TEST', '9x9grid', 100, 100, 8)
+# plot_exp('offline_TEST', 'fourroom', 100, 100, 8)
+# plot_exp('offline_TEST', 'hanoi', 100, 100, 8)
+# plot_exp('offline_TEST', 'track', 100, 100, 8)
+# plot_exp('offline_TEST', 'taxi', 100, 100, 8)
+# plot_exp('offline_TEST', 'Parr', 100, 200, 16)
+
+plot_exp('online_TEST', '9x9grid', 100, 300, 2)
+plot_exp('online_TEST', 'fourroom', 100, 300, 2)
+plot_exp('online_TEST', 'hanoi', 100, 300, 2)
+plot_exp('online_TEST', 'track', 100, 300, 2)
+# plot_exp('online_TEST', 'taxi', 100, 300, 2)
+# plot_exp('online_TEST', 'Parr', 100, 300, 2)
 
 exp_name = 'fourroom'
 n_instances = 100

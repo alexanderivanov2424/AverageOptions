@@ -6,7 +6,7 @@ from options.FiedlerOptions import FiedlerOptions
 from options.EigenOptions import Eigenoptions
 from options.AverageOptions import AverageShortestOptions
 from options.ApproxAverageOptions import ApproxAverageOptions
-from options.MinimumHittingTimeOptions import MinimumHittingOptions
+# from options.MinimumHittingTimeOptions import MinimumHittingOptions
 
 from options.graph.mdp import GetAdjacencyMatrix
 
@@ -84,7 +84,7 @@ def plotOptions(mdp, intToS, options, type="eigen"):
 
         ax.annotate(text='', xy=(end_x,end_y), xytext=(start_x,start_y), arrowprops=dict(arrowstyle='<->'))
     ax.set_title(type + ' options')
-
+    plt.axis('off')
     plt.show(block=True)
 
 def plotOptionGraphs(matrix, type="eigen"):
@@ -100,20 +100,22 @@ def plotOptionGraphs(matrix, type="eigen"):
 if __name__ == '__main__':
     n_options = 3
     dom = "grid"
-    task = "5x5grid"
+    task = "fourroom"
 
     if dom == 'grid':
-        mdp = make_grid_world_from_file('tasks/' + task + '.txt')
+        mdp = make_grid_world_from_file('tasks/' + task + '.txt', rand_init_and_goal=False, step_cost=0.0)
     elif dom == 'taxi':
-        width = 4
-        height = 4
+        width = 5
+        height = 5
         agent = {"x": 1, "y":1, "has_passenger":0}
         passengers = [{"x":3, "y":2, "dest_x":2, "dest_y": 3, "in_taxi":0}]
-        mdp = TaxiOOMDP(width, height, agent, walls=[], passengers=passengers)
+        mdp = TaxiOOMDP(width, height, agent, walls=[], passengers=passengers, step_cost=0.0)
     elif dom == 'gym':
         mdp = GymMDP(env_name=task, render=False)
     elif dom == 'hanoi':
-        mdp = HanoiMDP(num_pegs=3, num_discs=4)
+        mdp = HanoiMDP(num_pegs=3, num_discs=4, rand_init_goal=rand_init_and_goal, step_cost=0.0)
+    elif dom == 'track':
+        mdp = make_race_track_from_file('tasks/' + task + '.txt', rand_init_and_goal=rand_init_and_goal, step_cost=0.0)
     else:
         print('Unknown task name: ', task)
         assert(False)
@@ -121,10 +123,10 @@ if __name__ == '__main__':
 
     origMatrix, intToS = GetAdjacencyMatrix(mdp)
 
-    # fiedlerMatrix, foptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='fiedler')
+    fiedlerMatrix, foptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='fiedler')
     # eigenMatrix, eoptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='eigen')
     ASPDMMatrix, ASPDMoptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='ASPDM')
-    # ApproxAverageMatrix, ApproxAverageoptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='ApproxAverage')
+    ApproxAverageMatrix, ApproxAverageoptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='ApproxAverage')
     # MinHittingMatrix, MinHittingoptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='MinHitting')
     # _, boptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='bet')
 
@@ -138,8 +140,8 @@ if __name__ == '__main__':
 
     # plotOptions(mdp, intToS, foptions, "Covering")
     # plotOptions(mdp, intToS, eoptions, "Eigen")
-    plotOptions(mdp, intToS, ASPDMoptions, "Average")
-    # plotOptions(mdp, intToS, ApproxAverageoptions, "ApproxAverage")
+    # plotOptions(mdp, intToS, ASPDMoptions, "Average")
+    plotOptions(mdp, intToS, ApproxAverageoptions, "ApproxAverage")
     # plotOptions(mdp, intToS, MinHittingoptions, "MinHitting")
 
     # plotOptionGraphs(fiedlerMatrix, "Covering")
