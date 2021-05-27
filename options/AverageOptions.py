@@ -135,20 +135,23 @@ def BruteOptions(G, P, k, delta = 1, subgoal=False):
 
 
         # weight of each node pair
-        W = np.zeros(A.shape)
-        for pair in P:
-            W[pair[0],pair[1]] += 1
+        W = np.ones(A.shape)
+        # for pair in P:
+        #     W[pair[0],pair[1]] += 1
 
         def cost(i,j):
-            A_ = A.copy()
-            A_[i,j] = 1
-            A_[j,i] = 1 #add option
-            return average_shortest_distance(A_,W)
+            s1, s2 = A[i,j], A[j,i]
+            A[i,j] = 1
+            A[j,i] = 1 #add option
+            c = average_shortest_distance(A,W)
+            A[i,j] = s1
+            A[j,i] = s2
+            return c
 
         option = (0,0)
         avg_shortest_distance = None
         for i in range(len(A)):
-            for j in range(i+1,len(A)):
+            for j in range(len(A)):
                 c = cost(i,j)
                 if avg_shortest_distance == None:
                     avg_shortest_distance = c
@@ -160,7 +163,7 @@ def BruteOptions(G, P, k, delta = 1, subgoal=False):
 
 
         options.append(option)
-
+        options.append((option[1], option[0]))
 
         if subgoal:
             B = A.copy()
@@ -168,6 +171,7 @@ def BruteOptions(G, P, k, delta = 1, subgoal=False):
             B[option[1], :] = 1
         else:
             B = AddEdge(A, option[0], option[1])
+            B = AddEdge(A, option[1], option[0])
         #update graph
         A = B
 

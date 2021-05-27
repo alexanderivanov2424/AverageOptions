@@ -153,8 +153,8 @@ np.random.seed(0)
 random.seed(0)
 
 RAND_INIT = True
-n_options = 4#8
-add_options_n_ep = 50
+n_options = 2#8
+add_options_n_ep = 20
 n_instances = 100 #200
 episodes = 300 #100
 
