@@ -94,6 +94,7 @@ def make_plot(dom, task="", rand_init_and_goal=True, n_options=8, add_options_n_
         agents = [eigenAgent, fiedlerAgent, ASPDMAgent, ApproxAverageAgent, ql_agent]
     else:
         agents = [eigenAgent, fiedlerAgent, ApproxAverageAgent, ql_agent]
+    agents = [ApproxAverageAgent, ql_agent]
     # agents = [eigenAgent, ASPDMAgent, ApproxAverageAgent, ql_agent]
     # agents = [eigenAgent, ApproxAverageAgent, ql_agent]
 
@@ -141,7 +142,7 @@ def make_plot(dom, task="", rand_init_and_goal=True, n_options=8, add_options_n_
     exp_name = task if dom == 'grid' else dom
     filename = f'online_{exp_name}_inst{n_instances}_ep{n_episodes}_op{n_options}'
     plt.savefig('Plots/' + filename + '.png')
-    # plt.show(block=True)
+    plt.show(block=True)
     gc.collect()
     plt.cla()
 
@@ -154,8 +155,8 @@ random.seed(0)
 
 RAND_INIT = True
 n_options = 2#8
-add_options_n_ep = 20
-n_instances = 100 #200
+add_options_n_ep = 50
+n_instances = 10 #200
 episodes = 300 #100
 
 use_ASPDM = False
@@ -166,7 +167,7 @@ use_ASPDM = False
 use_ASPDM = False
 # make_plot("track", task="Track2", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
 make_plot("taxi", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=100, add_options_n_ep=add_options_n_ep)
-make_plot("grid", task="Parr", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=300, add_options_n_ep=add_options_n_ep)
+# make_plot("grid", task="Parr", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=300, add_options_n_ep=add_options_n_ep)
 
 # make_plot("grid", task="tworoom", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50)
 # make_plot("grid", task="twohall", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50)

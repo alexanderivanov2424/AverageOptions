@@ -58,7 +58,7 @@ def run_agent_on_mdp_online(agent, mdp, instances, episodes, steps, episode_samp
 
             for episode in range(episodes):
                 if hasattr(agent, 'generate_options') and add_options_n_ep:
-                    if episode != 0 and episode % add_options_n_ep == 0:
+                    if (episode + 25) % add_options_n_ep == 0:
                         agent.generate_options(num_ops_add)
 
                 mdp.reset()
