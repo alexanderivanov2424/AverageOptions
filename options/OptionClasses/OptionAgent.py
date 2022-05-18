@@ -14,7 +14,7 @@ from simple_rl.agents.AgentClass import Agent
 class OptionAgent(Agent):
     ''' Implementation for a Q Learning Agent '''
 
-    def __init__(self, name, actions, option_method=None, online=False, option_freq=1000, option_max=8, alpha=0.1, gamma=0.95,
+    def __init__(self, name, actions, option_method=None, online=False, option_freq=1000, option_max=1000, alpha=0.1, gamma=0.95,
                 epsilon=0.1, default_q=1.0, option_q=1.0):
 
         Agent.__init__(self, name=name, actions=actions, gamma=gamma)
@@ -56,7 +56,7 @@ class OptionAgent(Agent):
         if len(self.options) >= self.option_max:
             return
         if self.online:
-            new_ops = self.option_method(num_options, self.experiences)
+            new_ops = self.option_method(num_options, self.experiences, self.options)
         else:
             new_ops = self.option_method(num_options)
 
@@ -141,6 +141,7 @@ class OptionAgent(Agent):
 
 
     def update_q_func(self, state, action, reward, next_state, terminal, option_len=1):
+        # Treat Options as single steps, decision discounting
         option_len=1
         # Update the Q Function.
         max_q_curr_state = self.get_max_q_value(next_state) * (0 if terminal else 1)

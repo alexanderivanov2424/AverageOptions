@@ -19,12 +19,12 @@ def Eigenoptions(G, k):
     Lscipy = nx.linalg.laplacian_matrix(Gnx).astype(float)
     # print('Laplacian', Lscipy)
 
-    # L = Lscipy.todense().astype(float)
+    L = Lscipy.todense().astype(float)
     # SciPy sparse matrix to Numpy matrix
     # TODO: Is this procedure taking too much time?
     # print(Lscipy.shape[0], int(k / 2) + 1)
-    evalues, evectors = eigsh(Lscipy, int(k / 2) + 1, which='SA') # 95 seconds: why is it taking more time than eig? Probably for larger matrix it is more faster? # Took 60 seconds with sparse matrix. Seems like that was the bottleneck.
-    # evalues, evectors = linalg.eig(L) # 68 seconds
+    #evalues, evectors = eigsh(Lscipy, int(k / 2) + 1, which='SA') # 95 seconds: why is it taking more time than eig? Probably for larger matrix it is more faster? # Took 60 seconds with sparse matrix. Seems like that was the bottleneck.
+    evalues, evectors = linalg.eigh(L) # 68 seconds
 
 
     # print('G=', G)

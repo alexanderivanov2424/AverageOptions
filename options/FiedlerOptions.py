@@ -29,7 +29,7 @@ def FiedlerOptions(G, k, subgoal=False):
 
     while no < k:
         v = ComputeFiedlerVector(nx.to_networkx_graph(A))
-        lmd = ComputeConnectivity(A)
+        #lmd = ComputeConnectivity(A) #NOT BEING USED
 
         maxs = [np.argmax(v)]
         mins = [np.argmin(v)]
@@ -50,7 +50,7 @@ def FiedlerOptions(G, k, subgoal=False):
             B = AddEdge(A, option[0][0], option[1][0])
         A = B
         no += 2
-        eigenvalues.append(lmd)
+        # eigenvalues.append(lmd) #NOT BEING USED
         eigenvectors.append(v)
 
     # TODO: If A is a subgraph of G, convert the acquired eigenvectors to the original size.

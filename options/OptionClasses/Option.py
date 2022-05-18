@@ -72,6 +72,24 @@ def getShortestPathLengthGraph(mdp, graph):
             length = l
     return length
 
+def getShortestPathLengthGraphMany(mdp, graph):
+    end = None
+    for s in graph.nodes:
+        for a in mdp.get_actions():
+            s_ = mdp.transition_func(s,a)
+            r =  mdp.reward_func(s,a,s_)
+            if r > 0:
+                end = s
+                break
+        if end:
+            break
+
+    paths = nx.shortest_path(graph, target=end)
+    lengths = {}
+    for key in paths.keys():
+        lengths[key] = len(paths[key])
+    return lengths
+
 def getGraphFromMDP(mdp):
     G = nx.MultiDiGraph()
     terminal = []

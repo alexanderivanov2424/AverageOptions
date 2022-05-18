@@ -9,6 +9,17 @@ import matplotlib.pyplot as plt
 
 import itertools
 
+def pack_options(S, A):
+    options = []
+    for i in range(1,len(S)):
+        option = (S[0], S[i])
+        options.append(option)
+
+        A[option[0],option[1]] = 1
+        A[option[1],option[0]] = 1
+
+    return options
+
 
 """
 https://www.mlgworkshop.org/2019/papers/MLG2019_paper_41.pdf
@@ -28,21 +39,10 @@ def ApproxAverageOptions(G,k):
         for i in range(len(A)):
             shortest_dist = D[S[0],i]
             for j in range(1,len(S)):
-                shortest_dist = min(shortest_dist, D[j,i])
+                shortest_dist = min(shortest_dist, D[S[j],i])
             sum += shortest_dist
         return sum
 
-    def cost_avg(S, delta = 1):
-        sum = 0
-        for v in range(len(A)):
-            for u in range(len(A)):
-                if u == v:
-                    continue
-                shortest_dist = D[v,S[0]]
-                for s in range(1,len(S)):
-                    shortest_dist = min(shortest_dist, D[v,s])
-                sum += min(shortest_dist, max(0, D[v,u]-2*delta))
-        return sum
 
     def get_trees(S):
         paths = nx.multi_source_dijkstra_path(graph, list(S))
@@ -63,34 +63,36 @@ def ApproxAverageOptions(G,k):
         S_ = np.array([], dtype='int')
         for T in T_list:
             S_ = np.append(S_, center(T)[0])
-        cost_new = cost(S_) #cost_avg(S_)
+        cost_new = cost(S_)
         S = S_
         if cost_new >= min_cost:
             break
         min_cost = cost_new
 
 
-    options = []
-    for i in range(len(S)-1):
-        best_j = None
-        min_cost = None
-        for j in range(i+1,len(S)):
-            c = D[S[i],S[j]]
-            if best_j == None:
-                best_j = j
-                min_cost = c
-                continue
-            if c > min_cost:
-                best_j = j
-                min_cost = c
-
-        option = (S[i], S[best_j])
-        options.append(option)
-
-        A[option[0],option[1]] = 1
-        A[option[1],option[0]] = 1
-
+    options = pack_options(S, A)
     return A, options
+    # options = []
+    # for i in range(len(S)-1):
+    #     best_j = None
+    #     min_cost = None
+    #     for j in range(i+1,len(S)):
+    #         c = D[S[i],S[j]]
+    #         if best_j == None:
+    #             best_j = j
+    #             min_cost = c
+    #             continue
+    #         if c > min_cost:
+    #             best_j = j
+    #             min_cost = c
+
+    #     option = (S[i], S[best_j])
+    #     options.append(option)
+
+    #     A[option[0],option[1]] = 1
+    #     A[option[1],option[0]] = 1
+
+    # return A, options
 
 
 def test():
@@ -102,5 +104,7 @@ def test():
     #Gnx = nx.barabasi_albert_graph(n=N,m=1)
     A = nx.to_numpy_matrix(Gnx).astype(dtype='int')
 
-    A_, options = KMedianOptions(A, 1)
+    A_, options = ApproxAverageOptions(A, 1)
     print(options)
+
+
