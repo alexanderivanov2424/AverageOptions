@@ -7,7 +7,21 @@ import matplotlib.path as mpath
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 
+y_label = 'fraction of maximum return'
+
+def name_to_label(name):
+    if name == 'eigen-options':
+        return 'eigen'
+    if name == 'fiedler-options':
+        return 'covering'
+    if name == 'ASPDM-options':
+        return 'ASD'
+    if name == 'ApproxAverage-options':
+        return 'fast ASD'
+    return name
+
 def plot_exp(prefix, exp_name, n_instances, n_episodes, n_options):
+    global y_label
     filename = f'{prefix}_{exp_name}_inst{n_instances}_ep{n_episodes}_op{n_options}'
 
     with open('PlotData/' + filename + '.json', "r") as file:
@@ -32,30 +46,26 @@ def plot_exp(prefix, exp_name, n_instances, n_episodes, n_options):
         se = scipy.stats.sem(data, axis=0)
         conf = se * scipy.stats.t.ppf((1 + .8) / 2., len(Y)-1)
         plt.fill_between(range(len(Y)), Y + conf, Y - conf, color=color_dict[agent_name], alpha=0.25)
-        plt.plot(range(len(Y)), Y, color=color_dict[agent_name], label=agent_name)
+        plt.plot(range(len(Y)), Y, color=color_dict[agent_name], label=name_to_label(agent_name))
 
     # plt.title(exp_name)
     plt.xlabel('episode')
-    plt.ylabel('fraction of maximum return')
+    plt.ylabel(y_label)
     plt.legend()
     plt.show(block=True)
 
+y_label = 'fraction of maximum return'
+plot_exp('offline_TEST', '9x9grid', 100, 100, 8)
+plot_exp('offline_TEST', 'fourroom', 100, 100, 8)
+plot_exp('offline_TEST', 'hanoi', 100, 100, 8)
+plot_exp('offline_TEST', 'track', 100, 100, 8)
+plot_exp('offline_TEST', 'taxi', 100, 100, 8)
+plot_exp('offline_TEST', 'Parr', 100, 200, 16)
 
-# plot_exp('offline_TEST', '9x9grid', 100, 100, 8)
-# plot_exp('offline_TEST', 'fourroom', 100, 100, 8)
-# plot_exp('offline_TEST', 'hanoi', 100, 100, 8)
-# plot_exp('offline_TEST', 'track', 100, 100, 8)
-# plot_exp('offline_TEST', 'taxi', 100, 100, 8)
-# plot_exp('offline_TEST', 'Parr', 100, 200, 16)
-
+y_label = 'return'
 plot_exp('online_TEST', '9x9grid', 100, 300, 2)
 plot_exp('online_TEST', 'fourroom', 100, 300, 2)
 plot_exp('online_TEST', 'hanoi', 100, 300, 2)
 plot_exp('online_TEST', 'track', 100, 300, 2)
-# plot_exp('online_TEST', 'taxi', 100, 300, 2)
-# plot_exp('online_TEST', 'Parr', 100, 300, 2)
-
-exp_name = 'fourroom'
-n_instances = 100
-n_episodes = 100
-n_options = 8
+plot_exp('online', 'taxi', 100, 300, 2)
+plot_exp('online', 'Parr', 100, 300, 2)

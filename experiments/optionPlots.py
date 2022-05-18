@@ -16,6 +16,8 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 
 import networkx as nx
+import numpy as np
+import random
 
 matplotlib.style.use('default')
 
@@ -48,6 +50,16 @@ def GetOption(mdp, k=1, sample=False, matrix=None, intToS=None, method='eigen'):
 
     return B, options, intToS, vectors
 
+
+def type_to_name(type):
+    if type == "eigen":
+        return "Eigen Options"
+    if type == "fiedler":
+        return "Covering Options"
+    if type == "ASPDM":
+        return "Average Options"
+    if type == "ApproxAverage":
+        return "Fast Average Options"
 
 """
 grid mdp only
@@ -83,9 +95,11 @@ def plotOptions(mdp, intToS, options, type="eigen"):
         ax.plot(end_x,end_y, "ro")
 
         ax.annotate(text='', xy=(end_x,end_y), xytext=(start_x,start_y), arrowprops=dict(arrowstyle='<->'))
-    ax.set_title(type + ' options')
+    #ax.set_title(type_to_name(type))
     plt.axis('off')
-    plt.show(block=True)
+
+    filename = f"Plot_{type_to_name(type)}_{dom}_{task}"
+    plt.savefig('Plots/' + filename + '.png')
 
 def plotOptionGraphs(matrix, type="eigen"):
     fig, ax = plt.subplots()
@@ -96,12 +110,7 @@ def plotOptionGraphs(matrix, type="eigen"):
     plt.show(block=True)
 
 
-
-if __name__ == '__main__':
-    n_options = 3
-    dom = "grid"
-    task = "fourroom"
-
+def generatePlot(n_options, dom, task, type):
     if dom == 'grid':
         mdp = make_grid_world_from_file('tasks/' + task + '.txt', rand_init_and_goal=False, step_cost=0.0)
     elif dom == 'taxi':
@@ -122,29 +131,25 @@ if __name__ == '__main__':
 
 
     origMatrix, intToS = GetAdjacencyMatrix(mdp)
+    if type == "eigen":
+        M, ops, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='eigen')
+    if type == "fiedler":
+        M, ops, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='fiedler')
+    if type == "ASPDM":
+        M, ops, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='ASPDM')
+    if type == "ApproxAverage":
+        M, ops, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='ApproxAverage')
 
-    fiedlerMatrix, foptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='fiedler')
-    # eigenMatrix, eoptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='eigen')
-    ASPDMMatrix, ASPDMoptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='ASPDM')
-    ApproxAverageMatrix, ApproxAverageoptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='ApproxAverage')
-    # MinHittingMatrix, MinHittingoptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='MinHitting')
-    # _, boptions, _, _ = GetOption(mdp, n_options, matrix=origMatrix, intToS=intToS, method='bet')
+    plotOptions(mdp, intToS, ops, type)
+    
 
+if __name__ == '__main__':
+    np.random.seed(0)
+    random.seed(0)
 
-    # print(foptions)
-    # print(eoptions)
-    print(ASPDMoptions)
-    # print(ApproxAverageoptions)
-    # print(boptions)
-    # print(MinHittingoptions)
+    n_options = 3
+    dom = "grid"
 
-    # plotOptions(mdp, intToS, foptions, "Covering")
-    # plotOptions(mdp, intToS, eoptions, "Eigen")
-    # plotOptions(mdp, intToS, ASPDMoptions, "Average")
-    plotOptions(mdp, intToS, ApproxAverageoptions, "ApproxAverage")
-    # plotOptions(mdp, intToS, MinHittingoptions, "MinHitting")
-
-    # plotOptionGraphs(fiedlerMatrix, "Covering")
-    # plotOptionGraphs(eigenMatrix, "Eigen")
-    # plotOptionGraphs(ASPDMMatrix, "Average")
-    # plotOptionGraphs(ApproxAverageMatrix, "ApproxAverage")
+    for task in ["9x9grid", "fourroom"]:
+        for type in ["eigen", "fiedler", "ASPDM", "ApproxAverage"]:
+            generatePlot(n_options, dom, task, type)

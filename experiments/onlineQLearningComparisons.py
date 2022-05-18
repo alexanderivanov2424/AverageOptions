@@ -42,9 +42,14 @@ use_ASPDM = True
 def make_option_agent(mdp, nx_graph, Matrix, intToS, method='eigen'):
     A = Matrix.copy()
 
-    def call_back(num_options, experiences=None):
+    def call_back(num_options, experiences=None, existing_ops=None):
         if experiences != None:
             exp_nx_graph, exp_matrix, exp_intToS = getGraphFromExp(experiences, nx_graph)
+            for op in existing_ops:
+                if op.start in list(exp_intToS.values()) and op.end in list(exp_intToS.values()):
+                    start_i = list(exp_intToS.keys())[list(exp_intToS.values()).index(op.start)]
+                    end_i = list(exp_intToS.keys())[list(exp_intToS.values()).index(op.end)]
+                    exp_matrix[start_i,end_i] = 1
             _, option_i_pairs, _ = GetOptions(exp_matrix, num_options, method, verbose=False)
             options = [constructPointOptionObject(option_i_pair, nx_graph, intToS) for option_i_pair in option_i_pairs]
             return options
@@ -94,9 +99,9 @@ def make_plot(dom, task="", rand_init_and_goal=True, n_options=8, add_options_n_
         agents = [eigenAgent, fiedlerAgent, ASPDMAgent, ApproxAverageAgent, ql_agent]
     else:
         agents = [eigenAgent, fiedlerAgent, ApproxAverageAgent, ql_agent]
-    agents = [ApproxAverageAgent, ql_agent]
     # agents = [eigenAgent, ASPDMAgent, ApproxAverageAgent, ql_agent]
     # agents = [eigenAgent, ApproxAverageAgent, ql_agent]
+    # agents = [ql_agent]
 
     #NOTE: do not need to generated options because no experiences yet
     # for agent in agents:
@@ -104,7 +109,7 @@ def make_plot(dom, task="", rand_init_and_goal=True, n_options=8, add_options_n_
     #         continue
     #     agent.generate_options(n_options)
 
-    experiment = train_agents_on_mdp_online(agents, mdp, instances=n_instances, episodes=n_episodes, steps=n_steps, episode_sample_rate = 1, add_options_n_ep=add_options_n_ep, num_ops_add=n_options)
+    experiment = train_agents_on_mdp_online(agents, mdp, nx_graph, instances=n_instances, episodes=n_episodes, steps=n_steps, episode_sample_rate = 1, add_options_n_ep=add_options_n_ep, num_ops_add=n_options)
 
     # for s in eigenAgent.q_func:
     #     print(s, end=" ")
@@ -137,12 +142,12 @@ def make_plot(dom, task="", rand_init_and_goal=True, n_options=8, add_options_n_
 
     plt.title(dom + "  " + task)
     plt.xlabel('episode')
-    plt.ylabel('reward')
+    plt.ylabel('Fraction of Maximum Return')
     plt.legend()
     exp_name = task if dom == 'grid' else dom
-    filename = f'online_{exp_name}_inst{n_instances}_ep{n_episodes}_op{n_options}'
+    filename = f'online_optimistic_{exp_name}_inst{n_instances}_ep{n_episodes}_op{n_options}'
     plt.savefig('Plots/' + filename + '.png')
-    plt.show(block=True)
+    # plt.show(block=True)
     gc.collect()
     plt.cla()
 
@@ -154,20 +159,21 @@ np.random.seed(0)
 random.seed(0)
 
 RAND_INIT = True
-n_options = 2#8
+n_options = 4#8
 add_options_n_ep = 50
-n_instances = 10 #200
-episodes = 300 #100
+n_instances = 100 #200
+episodes = 500 #100
+n_steps = 1000
 
 use_ASPDM = False
-# make_plot("grid", task="9x9grid", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
-# make_plot("grid", task="fourroom", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
-# make_plot("hanoi", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
+# make_plot("grid", task="9x9grid", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=n_steps, add_options_n_ep=add_options_n_ep)
+# make_plot("grid", task="fourroom", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=n_steps, add_options_n_ep=add_options_n_ep)
+# make_plot("hanoi", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=n_steps, add_options_n_ep=add_options_n_ep)
 
 use_ASPDM = False
-# make_plot("track", task="Track2", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50, add_options_n_ep=add_options_n_ep)
-make_plot("taxi", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=100, add_options_n_ep=add_options_n_ep)
-# make_plot("grid", task="Parr", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=300, add_options_n_ep=add_options_n_ep)
+make_plot("track", task="Track1", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=n_steps, add_options_n_ep=add_options_n_ep)
+make_plot("taxi", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=n_steps, add_options_n_ep=add_options_n_ep)
+# make_plot("grid", task="Parr", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=n_steps, add_options_n_ep=add_options_n_ep)
 
 # make_plot("grid", task="tworoom", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50)
 # make_plot("grid", task="twohall", rand_init_and_goal=RAND_INIT, n_options=n_options, n_instances=n_instances, n_episodes=episodes, n_steps=50)

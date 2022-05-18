@@ -18,7 +18,7 @@ from simple_rl.utils import chart_utils
 from simple_rl.agents import *
 from simple_rl.tasks import *
 
-from options.OptionClasses.Option import getShortestPathLengthMDP, getShortestPathLengthGraph
+from options.OptionClasses.Option import getShortestPathLengthMDP, getShortestPathLengthGraphMany
 
 from tqdm import tqdm
 
@@ -27,19 +27,19 @@ import gc
 import random
 
 
-def train_agents_on_mdp_online(agents, mdp, instances=10, episodes=100, steps=500, episode_sample_rate = 1, add_options_n_ep=None, num_ops_add=4):
+def train_agents_on_mdp_online(agents, mdp, graph, instances=10, episodes=100, steps=500, episode_sample_rate = 1, add_options_n_ep=None, num_ops_add=4):
 
     data_dict = {}
 
     for agent in agents:
-        data = run_agent_on_mdp_online(agent, mdp, instances=instances, episodes=episodes, steps=steps, episode_sample_rate=episode_sample_rate, add_options_n_ep=add_options_n_ep, num_ops_add=num_ops_add)
+        data = run_agent_on_mdp_online(agent, mdp, graph, instances=instances, episodes=episodes, steps=steps, episode_sample_rate=episode_sample_rate, add_options_n_ep=add_options_n_ep, num_ops_add=num_ops_add)
         data_dict[agent.name] = data
 
     return data_dict
 
 
 
-def run_agent_on_mdp_online(agent, mdp, instances, episodes, steps, episode_sample_rate, add_options_n_ep=None, num_ops_add=1):
+def run_agent_on_mdp_online(agent, mdp, graph, instances, episodes, steps, episode_sample_rate, add_options_n_ep=None, num_ops_add=1):
 
     print(f"Training {agent.name}")
 
@@ -56,12 +56,17 @@ def run_agent_on_mdp_online(agent, mdp, instances, episodes, steps, episode_samp
 
             mdp.reset_init_and_goal()
 
+            optimal_path_lengths = getShortestPathLengthGraphMany(mdp, graph)
+            optimal_return = 1 * mdp.gamma ** optimal_path_lengths[mdp.get_init_state()]
+
             for episode in range(episodes):
                 if hasattr(agent, 'generate_options') and add_options_n_ep:
-                    if (episode + 25) % add_options_n_ep == 0:
+                    if (episode - 1) % add_options_n_ep == 0:
                         agent.generate_options(num_ops_add)
 
                 mdp.reset()
+
+                optimal_return = 1 * mdp.gamma ** optimal_path_lengths[mdp.get_init_state()]
 
                 state = mdp.get_init_state()
                 agent.end_of_episode()
@@ -83,19 +88,14 @@ def run_agent_on_mdp_online(agent, mdp, instances, episodes, steps, episode_samp
 
                     episode_reward += reward * mdp.gamma ** step
 
-                    if terminal or timeout: #timeout happens anyway this happens anyway
-                        if terminal:
-                            mdp.reset_init()
+                    if terminal or timeout:
+                        mdp.reset_init()
                         break
-                        # mdp.reset()
-                        # agent.end_of_episode()
-                        # next_state = mdp.get_init_state()
-                        # reward = 0 #clear reward before starting again
 
                     state = next_state
 
                 if episode % episode_sample_rate == 0:
-                    episode_rewards.append(episode_reward)
+                    episode_rewards.append(episode_reward/optimal_return)
                     # episode_rewards.append(step)
 
                 pbar.update(1)

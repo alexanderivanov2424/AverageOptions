@@ -89,8 +89,8 @@ def run_agent_on_mdp(agent, mdp, graph, instances, episodes, steps, episode_samp
                     state = next_state
 
                 if episode % episode_sample_rate == 0:
-                    # episode_rewards.append(episode_reward/optimal_return)
-                    episode_rewards.append(episode_reward)
+                    episode_rewards.append(episode_reward/optimal_return)
+                    # episode_rewards.append(episode_reward)
                     # episode_rewards.append(step)
 
                 pbar.update(1)
