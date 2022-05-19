@@ -40,6 +40,7 @@ matplotlib.use('TkAgg')
 
 def viewer_setup(env):
     cam = env.viewer.sim._render_context_window.cam
+    return
     #cam.trackbodyid = -1         # id of the body to track ()
     cam.distance =  20
     cam.lookat[0] = 4         # x,y,z offset from the object (works if trackbodyid=-1)
@@ -53,7 +54,7 @@ def viewer_setup(env):
 method = 'eigen' 'fiedler' 'ASPDM' 'ApproxAverage' 'hitting' 'none'
 
 """
-def buildOptions(states, A, num_ops, method, R = 1):
+def buildOptions(states, A, num_ops, method, R):
 
     if method == 'none':
         return []
@@ -99,7 +100,9 @@ def plot_option(save_name, env, option, states):
  
     env.viewer._read_pixels_as_in_window = _read_pixels_as_in_window
 
-    env.set_xy((12,12))
+
+    #setEnvVecIdx(env, [-100], [0])
+
     env.render()
     background = env.viewer._read_pixels_as_in_window()
 
@@ -108,10 +111,10 @@ def plot_option(save_name, env, option, states):
     env.reset()
 
     for i, state in enumerate(states):
-        setEnvData(env, state)
+        setEnvVec(env, state)
         print(i/len(states), end='\r')
         if i % 100 == 0 and i > 0:
-            if option.canRun(state):
+            if option.canRun(env, state, use_pos=True):
                 image = env.viewer._read_pixels_as_in_window()
                 blended[background!=image] = image[background!=image]
 
@@ -125,19 +128,19 @@ def plot_option(save_name, env, option, states):
                 image = env.viewer._read_pixels_as_in_window()
                 blended[background!=image] = image[background!=image]
 
-    Image.fromarray(blended).save(f"./continuous_exp/plots/optionPlots/{save_name}.png")
+    Image.fromarray(blended).save(f"./continuous_exp/data_and_plots/FetchReach-v1/plots/optionsPlots/{save_name}.png")
 
 def visualize_options(env_name, states_disc, states_all, method, num_options, op_i):
     np.random.seed(0)
     random.seed(0)
 
-    
-
-    A = buildAdjacencyFromStates(states_disc, .5, 10, use_2D=True)
-
-    options = buildOptions(states_disc, A, num_options, method)
-
     env = gym.make(env_name)
+
+    A = buildAdjacencyFromStates(env, states_disc, .15, 5, use_pos=True)
+
+    options = buildOptions(states_disc, A, num_options, method, .1)
+
+    
     
     op = options[op_i]        
     env.reset()
@@ -148,11 +151,12 @@ import sys
 method = sys.argv[1]
 num_ops = int(sys.argv[2])
 op_i = int(sys.argv[3])
-r = int(sys.argv[4])
+r = float(sys.argv[4])
 
 
-ENV_NAME = 'antmaze-umaze-v2'
+#ENV_NAME = 'antmaze-umaze-v2'
+ENV_NAME = "FetchReach-v1"
 
-states_disc = loadData(f'disc_r{r}_states_antmaze-umaze-v2')
-states_all = loadData('states_antmaze-umaze-v2')
+states_disc = loadData(ENV_NAME, f'disc_r{r}_states_pos')
+states_all = loadData(ENV_NAME, 'sampled_states')
 visualize_options(ENV_NAME, states_disc, states_all, method, num_ops, op_i)
